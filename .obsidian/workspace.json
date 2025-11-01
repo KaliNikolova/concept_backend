@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "design/concepts/overall_concept_design.md",
+                "file": "design/tools/sync-background.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "overall_concept_design"
+              "title": "sync-background"
             }
           }
         ],
@@ -186,8 +186,13 @@
   },
   "active": "50c8f38515c0b668",
   "lastOpenFiles": [
-    "context/design/concepts/Planner/testing_results.md/20251031_093109.0c0e3f47.md",
+    "design/tools/concept-background.md",
+    "design/tools/api-extraction-from-spec.md",
+    "design/tools/api-extraction-from-code.md",
+    "design/tools/sync-background.md",
     "design/concepts/overall_concept_design.md",
+    "design/tools",
+    "context/design/concepts/Planner/testing_results.md/20251031_093109.0c0e3f47.md",
     "context/design/concepts/Planner/testing.md/20251031_083755.f7ca65a2.md",
     "context/design/concepts/Tasks/implementation.md/20251023_230826.89f97c6f.md",
     "context/design/concepts/Schedule/implementation.md/20251030_221017.40d42fed.md",
@@ -208,10 +213,6 @@
     "context/design/concepts/UserAccount/implementation.md/20251019_221947.1f9132ec.md",
     "context/design/concepts/UserAccount/implementation.md/20251019_221821.65e79c5a.md",
     "context/design/concepts/UserAccount/implementation.md/20251019_221959.114071d8.md",
-    "context/design/concepts/UserAccount/implementation.md/20251019_221819.c6692895.md",
-    "context/design/concepts/UserAccount/implementation.md/20251019_221726.0e98ef71.md",
-    "context/design/concepts/UserAccount/implementation.md/20251019_221654.d50e0abe.md",
-    "context/design/concepts/Tasks/implementation.md/20251023_230803.1da5f456.md",
     "context/design/concepts/Planner/testing_results.md/steps",
     "src/concepts/Planner/Planner.spec",
     "src/concepts/Focus/Focus.spec",
@@ -220,7 +221,6 @@
     "context/design/concepts/Focus/desktop.ini",
     "context/design/concepts/Focus/testing.md/steps",
     "src/concepts/Focus/FocusConcept.ts",
-    "src/concepts/Focus/FocusConcept.test.ts",
-    "src/concepts/Focus"
+    "src/concepts/Focus/FocusConcept.test.ts"
   ]
 }

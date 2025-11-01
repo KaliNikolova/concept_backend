@@ -1,8 +1,12 @@
 {
+    "nodeModulesDir": "auto",
     "imports": {
         "@concepts/": "./src/concepts/",
         "@utils/": "./src/utils/",
         "bcrypt": "https://deno.land/x/bcrypt@v0.4.1/mod.ts"
+    },
+    "tasks": {
+        "concepts": "deno run --allow-net --allow-read --allow-sys --allow-env src/concept_server.ts --port 8000 --baseUrl /api"
     },
     "lint": {
     "rules": {

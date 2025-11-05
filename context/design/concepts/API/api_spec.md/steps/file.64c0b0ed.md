@@ -1,3 +1,12 @@
+---
+timestamp: 'Mon Nov 03 2025 17:52:29 GMT-0500 (Eastern Standard Time)'
+parent: '[[..\20251103_175229.869ff18e.md]]'
+content_id: 64c0b0ed43fa4a6c5bf5cc4cfedcd4fa5538b583bc8aa31dc491a8a434e5b410
+---
+
+# file: src\concepts\Tasks\TasksConcept.ts
+
+```typescript
 // file: src/Tasks/TasksConcept.ts
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
@@ -310,3 +319,41 @@ export default class TasksConcept {
     return { tasks: remainingTasks };
   }
 }
+
+```
+
+## Schedule
+
+Specification:
+
+\`
+concept Schedule \[User]
+purpose to represent a user's availability by combining non-negotiable, externally-scheduled commitments with manual time blocks
+principle The schedule shows a read-only reflection of a user's external calendar, and gives options to add and edit manual time blocks.
+
+state
+a set of BusySlots with
+an owner User
+a startTime DateTime
+a endTime DateTime
+a description String
+an origin: (EXTERNAL, MANUAL)
+
+actions
+blockTime (user: User, startTime: DateTime, endTime: DateTime, description: String)
+effect creates a new BusySlot for the user with the given details and sets origin to MANUAL
+updateSlot (slot: BusySlot, newStartTime: DateTime, newEndTime: DateTime, newDescription: String)
+requires slot.origin is MANUAL
+effect modifies the properties of a manually created BusySlot
+deleteSlot (slot: BusySlot)
+requires slot.origin is MANUAL
+effect removes a manually created BusySlot
+syncCalendar (user: User, externalEvents: set of Events)
+effect updates the user's schedule to match their external calendar without affecting MANUAL blocks.
+deleteAllForUser (user: User)
+effect removes all busy slots (both MANUAL and EXTERNAL) for the user.
+getSlots (user: User): (slots: set of BusySlots)
+effect returns all busy slots for the user, regardless of origin
+\`
+
+Code:

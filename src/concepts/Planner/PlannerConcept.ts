@@ -68,6 +68,12 @@ export default class PlannerConcept {
       busySlots: BusySlot[];
     },
   ): Promise<{ firstTask?: Task } | { error: string }> {
+    // Convert ISO strings to Date objects (in case they came from JSON)
+    const busySlotsWithDates = busySlots.map((slot) => ({
+      start: new Date(slot.start),
+      end: new Date(slot.end),
+    }));
+
     await this.clearDay({ user });
 
     const now = this.timeProvider();
@@ -94,7 +100,13 @@ export default class PlannerConcept {
       return {};
     }
 
-    return this._scheduleTasks(user, tasks, busySlots, planFrom, endOfToday);
+    return this._scheduleTasks(
+      user,
+      tasks,
+      busySlotsWithDates,
+      planFrom,
+      endOfToday,
+    );
   }
 
   /**
@@ -108,6 +120,12 @@ export default class PlannerConcept {
       busySlots: BusySlot[];
     },
   ): Promise<{ firstTask?: Task } | { error: string }> {
+    // Convert ISO strings to Date objects (in case they came from JSON)
+    const busySlotsWithDates = busySlots.map((slot) => ({
+      start: new Date(slot.start),
+      end: new Date(slot.end),
+    }));
+
     const now = this.timeProvider();
     await this.scheduledTasks.deleteMany({
       owner: user,
@@ -127,7 +145,7 @@ export default class PlannerConcept {
       return {};
     }
 
-    return this._scheduleTasks(user, tasks, busySlots, now, endOfDay);
+    return this._scheduleTasks(user, tasks, busySlotsWithDates, now, endOfDay);
   }
 
   /**
@@ -197,6 +215,21 @@ export default class PlannerConcept {
     );
 
     return { nextTask: nextTask?.task };
+  }
+
+  /**
+   * Retrieves all scheduled tasks for a given user.
+   * @returns A list of scheduled tasks, sorted by start time.
+   */
+  async _getScheduledTasks(
+    { user }: { user: User },
+  ): Promise<{ tasks: ScheduledTask[] }> {
+    const tasks = await this.scheduledTasks
+      .find({ owner: user }, {
+        sort: { plannedStart: 1 },
+      })
+      .toArray();
+    return { tasks };
   }
 
   /**

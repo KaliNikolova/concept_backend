@@ -40,33 +40,33 @@ Deno.test("TasksConcept", async (t) => {
 
       // 2. Alice adds three tasks
       console.log(
-        `Action: createTask({ owner: "${userAlice}", description: "Buy milk" })`,
+        `Action: createTask({ owner: "${userAlice}", title: "Buy milk" })`,
       );
       const task1Result = await tasksConcept.createTask({
         owner: userAlice,
-        description: "Buy milk",
+        title: "Buy milk",
       });
       console.log("Result:", task1Result);
       assert(isSuccess<{ task: ID }>(task1Result));
       const task1Id = task1Result.task;
 
       console.log(
-        `Action: createTask({ owner: "${userAlice}", description: "Walk the dog" })`,
+        `Action: createTask({ owner: "${userAlice}", title: "Walk the dog" })`,
       );
       const task2Result = await tasksConcept.createTask({
         owner: userAlice,
-        description: "Walk the dog",
+        title: "Walk the dog",
       });
       console.log("Result:", task2Result);
       assert(isSuccess<{ task: ID }>(task2Result));
       const task2Id = task2Result.task;
 
       console.log(
-        `Action: createTask({ owner: "${userAlice}", description: "File taxes" })`,
+        `Action: createTask({ owner: "${userAlice}", title: "File taxes" })`,
       );
       const task3Result = await tasksConcept.createTask({
         owner: userAlice,
-        description: "File taxes",
+        title: "File taxes",
       });
       console.log("Result:", task3Result);
       assert(isSuccess<{ task: ID }>(task3Result));
@@ -83,7 +83,7 @@ Deno.test("TasksConcept", async (t) => {
         task2Id,
         task3Id,
       ]);
-      assertEquals(allTasksResult.tasks[0].description, "Buy milk");
+      assertEquals(allTasksResult.tasks[0].title, "Buy milk");
       assertEquals(allTasksResult.tasks[0].status, "TODO");
 
       // 4. Alice marks "Buy milk" as complete
@@ -129,15 +129,16 @@ Deno.test("TasksConcept", async (t) => {
 
     const t1Res = await tasksConcept.createTask({
       owner: userBob,
-      description: "Task A",
+      title: "Task A",
     });
     const t2Res = await tasksConcept.createTask({
       owner: userBob,
-      description: "Task B",
+      title: "Task B",
     });
     const t3Res = await tasksConcept.createTask({
       owner: userBob,
-      description: "Task C",
+      title: "Task C",
+      description: "This is the original description",
     });
     assert(isSuccess<{ task: ID }>(t1Res));
     assert(isSuccess<{ task: ID }>(t2Res));
@@ -148,7 +149,7 @@ Deno.test("TasksConcept", async (t) => {
     let bobTasks = await tasksConcept._getTasks({ user: userBob });
     assert(isSuccess<{ tasks: TaskDocument[] }>(bobTasks));
     assertEquals(bobTasks.tasks.map((t) => t._id), [t1, t2, t3]);
-    console.log("Initial order:", bobTasks.tasks.map((t) => t.description));
+    console.log("Initial order:", bobTasks.tasks.map((t) => t.title));
 
     const newOrder = [t3, t1, t2];
     console.log(`Action: reorderTasks for Bob with new order [C, A, B]`);
@@ -162,13 +163,15 @@ Deno.test("TasksConcept", async (t) => {
     bobTasks = await tasksConcept._getTasks({ user: userBob });
     assert(isSuccess<{ tasks: TaskDocument[] }>(bobTasks));
     assertEquals(bobTasks.tasks.map((t) => t._id), newOrder);
-    console.log("New order:", bobTasks.tasks.map((t) => t.description));
+    console.log("New order:", bobTasks.tasks.map((t) => t.title));
 
-    const newDescription = "Task C - Updated";
+    const newTitle = "Task C - Updated";
+    const newDescription = "Task C - New Description";
     const newDueDate = new Date();
     console.log(`Action: updateTask for ${t3}`);
     const updateRes = await tasksConcept.updateTask({
       task: t3,
+      newTitle,
       newDescription,
       newDueDate,
     });
@@ -178,6 +181,7 @@ Deno.test("TasksConcept", async (t) => {
     bobTasks = await tasksConcept._getTasks({ user: userBob });
     assert(isSuccess<{ tasks: TaskDocument[] }>(bobTasks));
     const updatedTask = bobTasks.tasks.find((t) => t._id === t3);
+    assertEquals(updatedTask?.title, newTitle);
     assertEquals(updatedTask?.description, newDescription);
     assertEquals(updatedTask?.dueDate?.toISOString(), newDueDate.toISOString());
     console.log("Updated task details confirmed.");
@@ -190,11 +194,11 @@ Deno.test("TasksConcept", async (t) => {
 
     const t1Res = await tasksConcept.createTask({
       owner: userToDelete,
-      description: "Task D",
+      title: "Task D",
     });
     const t2Res = await tasksConcept.createTask({
       owner: userToDelete,
-      description: "Task E",
+      title: "Task E",
     });
     assert(isSuccess<{ task: ID }>(t1Res));
     assert(isSuccess<{ task: ID }>(t2Res));
@@ -234,57 +238,57 @@ Deno.test("TasksConcept", async (t) => {
       const userCharlie = "user:Charlie" as ID;
 
       console.log(`Action: createTask for non-existent user ${userCharlie}`);
-      const result1 = await tasksConcept.createTask({
+      const result = await tasksConcept.createTask({
         owner: userCharlie,
-        description: "Invalid task",
+        title: "Invalid task",
       });
-      console.log("Result:", result1);
-      assert(isError(result1));
+      console.log("Result:", result);
+      assert(isError(result));
 
       console.log(`Action: createUserTasks for ${userCharlie}`);
-      const result2 = await tasksConcept.createUserTasks({ user: userCharlie });
-      console.log("Result:", result2);
-      assert(!isError(result2));
+      const result1 = await tasksConcept.createUserTasks({ user: userCharlie });
+      console.log("Result:", result1);
+      assert(!isError(result1));
 
       console.log(`Action: createUserTasks for ${userCharlie} AGAIN`);
-      const result3 = await tasksConcept.createUserTasks({ user: userCharlie });
-      console.log("Result:", result3);
-      assert(isError(result3));
+      const result2 = await tasksConcept.createUserTasks({ user: userCharlie });
+      console.log("Result:", result2);
+      assert(isError(result2));
 
       const fakeTaskId = "task:fake" as ID;
       console.log(`Action: updateTask for non-existent task ${fakeTaskId}`);
-      const result4 = await tasksConcept.updateTask({
+      const result3 = await tasksConcept.updateTask({
         task: fakeTaskId,
-        newDescription: "won't work",
+        newTitle: "won't work",
       });
-      console.log("Result:", result4);
-      assert(isError(result4));
+      console.log("Result:", result3);
+      assert(isError(result3));
 
       const t1Res = await tasksConcept.createTask({
         owner: userCharlie,
-        description: "Real Task",
+        title: "Real Task",
       });
       assert(isSuccess<{ task: ID }>(t1Res));
       const t1 = t1Res.task;
       console.log(
         `Action: reorderTasks for ${userCharlie} with invalid task ID`,
       );
-      const result5 = await tasksConcept.reorderTasks({
+      const result4 = await tasksConcept.reorderTasks({
         user: userCharlie,
         newOrder: [t1, fakeTaskId],
       });
-      console.log("Result:", result5);
-      assert(isError(result5));
+      console.log("Result:", result4);
+      assert(isError(result4));
 
       console.log(
         `Action: reorderTasks for ${userCharlie} with incomplete list`,
       );
-      const result6 = await tasksConcept.reorderTasks({
+      const result5 = await tasksConcept.reorderTasks({
         user: userCharlie,
         newOrder: [],
       });
-      console.log("Result:", result6);
-      assert(isError(result6));
+      console.log("Result:", result5);
+      assert(isError(result5));
     },
   );
 
@@ -314,11 +318,11 @@ Deno.test("TasksConcept", async (t) => {
 
       const t1Res = await tasksConcept.createTask({
         owner: userDavid,
-        description: "Task F",
+        title: "Task F",
       });
       const t2Res = await tasksConcept.createTask({
         owner: userDavid,
-        description: "Task G",
+        title: "Task G",
       });
       assert(isSuccess<{ task: ID }>(t1Res));
       assert(isSuccess<{ task: ID }>(t2Res));

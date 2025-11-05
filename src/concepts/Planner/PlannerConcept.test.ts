@@ -48,6 +48,15 @@ Deno.test("PlannerConcept: Operational Principle", async () => {
     assert("firstTask" in planResult, "planDay should not return an error");
     assertEquals(planResult.firstTask, task1);
 
+    console.log(`1a. Verifying the full schedule for '${user}'.`);
+    // deno-lint-ignore no-explicit-any
+    const schedule = await (planner as any)._getScheduledTasks({ user });
+    console.log(" > _getScheduledTasks result:", schedule);
+    assertEquals(schedule.tasks.length, 3);
+    assertEquals(schedule.tasks[0].task, task1);
+    assertEquals(schedule.tasks[1].task, task2);
+    assertEquals(schedule.tasks[2].task, task3);
+
     console.log(`2. Getting task after '${task1}'.`);
     const nextAfter1 = await planner.getNextTask({
       user,

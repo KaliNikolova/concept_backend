@@ -32,3 +32,14 @@ Overall, the design of the application remained largely stable, with three of th
 5. **Comparing LLM Models for Implementing Code:** Generally Gemini 2.5 pro was better with modifying specific parts of the code and implementations in general - it followed the prompts more closely. For instance, I had to rerun the prompt for implementing UserAccount with Gemini flash but it worked well with pro:
     
     - Working implementation from the first time using Gemini 2.5 pro: [20251021_185449.e6308c8b](../../context/design/concepts/UserAccount/implementation.md/20251021_185449.e6308c8b.md)
+
+
+# Updates in 4b:
+
+### Planner:
+
+Added `_getScheduledTasks` and tests for it to have access to the current schedule.
+
+### Tasks:
+
+I added task title, taking the function of "description" before. Now description is a more lengthy text used as more extensive explanation of the task.

@@ -1,1 +1,6 @@
 I didn't change the Planner concept itself, but I had to rework the implementation because of a tricky bug. My tests would pass or fail depending on the time of day I ran them. I realized this was because my code used new Date() to get the current time, which made my tests unpredictable. This was a sneaky bug that confused me for a while. To fix it, I added a timeProvider field. By default, it's a function that gives new Date(), but in my tests, I can set it to a fixed time.
+
+
+# Assignment 4b
+
+Added `_getScheduledTasks` and tests for it to have access to the current schedule.

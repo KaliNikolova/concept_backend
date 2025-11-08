@@ -25,12 +25,10 @@
  */
 
 export const inclusions: Record<string, string> = {
-  // Feel free to delete these example inclusions
-  "/api/LikertSurvey/_getSurveyQuestions": "this is a public query",
-  "/api/LikertSurvey/_getSurveyResponses": "responses are public",
-  "/api/LikertSurvey/_getRespondentAnswers": "answers are visible",
-  "/api/LikertSurvey/submitResponse": "allow anyone to submit response",
-  "/api/LikertSurvey/updateResponse": "allow anyone to update their response",
+  // UserAccount.register is a standalone, public action for new users to create an account.
+  // This assumes a user flow where registration is followed by a redirect to a login page,
+  // rather than an automatic login.
+  "/api/UserAccount/register": "Public action for new users to sign up.",
 };
 
 /**
@@ -44,7 +42,52 @@ export const inclusions: Record<string, string> = {
  */
 
 export const exclusions: Array<string> = [
-  // Feel free to delete these example exclusions
-  "/api/LikertSurvey/createSurvey",
-  "/api/LikertSurvey/addQuestion",
+  // UserAccount.login MUST be excluded because it requires coordination
+  // with the Sessioning concept to create a session token upon successful authentication.
+  "/api/UserAccount/login",
+
+  // UserAccount.logout is a custom path that requires coordination with Sessioning
+  // to delete the session token.
+  "/api/UserAccount/logout",
+
+  // All other actions below require an active session to authorize the request,
+  // which is handled by synchronizations.
+  "/api/Focus/setCurrentTask",
+  "/api/Focus/clearCurrentTask",
+  "/api/Focus/getCurrentTask",
+
+  "/api/Planner/planDay",
+  "/api/Planner/replan",
+  "/api/Planner/clearDay",
+  "/api/Planner/deleteAllForUser",
+  "/api/Planner/getNextTask",
+  "/api/Planner/_getScheduledTasks",
+  "/api/Planner/_scheduleTasks",
+  "/api/Planner/_getAvailableSlots",
+
+  "/api/Schedule/blockTime",
+  "/api/Schedule/updateSlot",
+  "/api/Schedule/deleteSlot",
+  "/api/Schedule/syncCalendar",
+  "/api/Schedule/deleteAllForUser",
+  "/api/Schedule/_getSlots",
+
+  "/api/Sessioning/create",
+  "/api/Sessioning/delete",
+  "/api/Sessioning/_getUser",
+
+  "/api/Tasks/createUserTasks",
+  "/api/Tasks/createTask",
+  "/api/Tasks/updateTask",
+  "/api/Tasks/reorderTasks",
+  "/api/Tasks/markTaskComplete",
+  "/api/Tasks/deleteTask",
+  "/api/Tasks/deleteAllForUser",
+  "/api/Tasks/_getTasks",
+  "/api/Tasks/_getRemainingTasks",
+
+  "/api/UserAccount/updateProfile",
+  "/api/UserAccount/deleteAccount",
+  "/api/UserAccount/_getUserProfile",
+  "/api/UserAccount/_findUserByEmail",
 ];

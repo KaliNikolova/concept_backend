@@ -272,22 +272,29 @@ export default class TasksConcept {
    */
   async _getTasks(
     { user }: { user: User },
-  ): Promise<{ tasks: TaskDocument[] } | { error: string }> {
+  ): Promise<{ tasks: TaskDocument[] }[]> {
     const userTasks = await this.userTasks.findOne({ _id: user });
     if (!userTasks) {
-      return { error: `No task list found for user ${user}.` };
+      return []; // Return empty array if user has no task list
     }
 
-    const taskDocuments: TaskDocument[] = [];
-    for (const taskId of userTasks.orderedTasks) {
-      const taskDoc = await this.tasks.findOne({ _id: taskId });
-      if (taskDoc) {
-        taskDocuments.push(taskDoc);
-      }
-      // If a task ID exists in orderedTasks but not in tasks collection,
-      // it means data inconsistency, but we'll return what we find.
+    if (userTasks.orderedTasks.length === 0) {
+      return [{ tasks: [] }];
     }
-    return { tasks: taskDocuments };
+
+    const taskDocuments = await this.tasks.find({
+      _id: { $in: userTasks.orderedTasks },
+    }).toArray();
+
+    // The database query doesn't preserve order, so we must re-order here.
+    const taskMap = new Map(
+      taskDocuments.map((task) => [task._id.toString(), task]),
+    );
+    const orderedTasks = userTasks.orderedTasks
+      .map((taskId) => taskMap.get(taskId.toString()))
+      .filter((task): task is TaskDocument => task !== undefined);
+
+    return [{ tasks: orderedTasks }];
   }
 
   /**
@@ -297,16 +304,18 @@ export default class TasksConcept {
    */
   async _getRemainingTasks(
     { user }: { user: User },
-  ): Promise<{ tasks: TaskDocument[] } | { error: string }> {
+  ): Promise<{ tasks: TaskDocument[] }[]> {
     const allUserTasksResult = await this._getTasks({ user });
 
-    if ("error" in allUserTasksResult) {
-      return allUserTasksResult;
+    if (allUserTasksResult.length === 0) {
+      return []; // User has no task list or no tasks
     }
 
-    const remainingTasks = allUserTasksResult.tasks.filter(
+    const allTasks = allUserTasksResult[0].tasks;
+    const remainingTasks = allTasks.filter(
       (task) => task.status === "TODO",
     );
-    return { tasks: remainingTasks };
+
+    return [{ tasks: remainingTasks }];
   }
 }

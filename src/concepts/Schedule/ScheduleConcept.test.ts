@@ -53,7 +53,8 @@ Deno.test("Operational Principle: Sync external calendar and manage manual block
     console.log("Result: Success");
 
     // 2. Verify the external slots are created correctly
-    let slots = await schedule._getSlots({ user: userA });
+    let slotsResult = await schedule._getSlots({ user: userA });
+    let slots = slotsResult.map(s => s.slot);
     console.log(
       `Query: _getSlots for user ${userA}. Found ${slots.length} slots.`,
     );
@@ -75,7 +76,8 @@ Deno.test("Operational Principle: Sync external calendar and manage manual block
     console.log(`Result: Success, created slot with ID: ${manualSlotId}`);
 
     // 4. Verify both external and manual slots exist
-    slots = await schedule._getSlots({ user: userA });
+    slotsResult = await schedule._getSlots({ user: userA });
+    slots = slotsResult.map(s => s.slot);
     console.log(
       `Query: _getSlots for user ${userA}. Found ${slots.length} slots.`,
     );
@@ -114,7 +116,8 @@ Deno.test("Operational Principle: Sync external calendar and manage manual block
     console.log("Result: Success");
 
     // 7. Verify the final state is correct
-    slots = await schedule._getSlots({ user: userA });
+    slotsResult = await schedule._getSlots({ user: userA });
+    slots = slotsResult.map(s => s.slot);
     console.log(
       `Query: _getSlots for user ${userA}. Found ${slots.length} slots.`,
     );
@@ -146,7 +149,8 @@ Deno.test("Interesting Scenario: Attempt to modify external slots", async () => 
       description: "Immutable Meeting",
     }];
     await schedule.syncCalendar({ user: userB, externalEvents });
-    const slots = await schedule._getSlots({ user: userB });
+    const slotsResult = await schedule._getSlots({ user: userB });
+    const slots = slotsResult.map(s => s.slot);
     const externalSlotId = slots[0]._id;
 
     // 1. Attempt to update an external slot with valid times to bypass the first check
@@ -175,7 +179,8 @@ Deno.test("Interesting Scenario: Attempt to modify external slots", async () => 
     console.log(`Result: Correctly failed with error: "${deleteError.error}"`);
 
     // Verify the slot was not changed or deleted
-    const finalSlots = await schedule._getSlots({ user: userB });
+    const finalSlotsResult = await schedule._getSlots({ user: userB });
+    const finalSlots = finalSlotsResult.map(s => s.slot);
     assertEquals(finalSlots.length, 1);
     console.log("--- Modify External Slots Test Passed ---");
   } finally {
@@ -269,8 +274,10 @@ Deno.test("Interesting Scenario: Complete data removal for a single user", async
     console.log("Result: Success");
 
     // 2. Verify userD has no slots, but userE's slots remain
-    const slotsD = await schedule._getSlots({ user: userD });
-    const slotsE = await schedule._getSlots({ user: userE });
+    const slotsDResult = await schedule._getSlots({ user: userD });
+    const slotsD = slotsDResult.map(s => s.slot);
+    const slotsEResult = await schedule._getSlots({ user: userE });
+    const slotsE = slotsEResult.map(s => s.slot);
     console.log(
       `Query: _getSlots for user ${userD}. Found ${slotsD.length} slots.`,
     );
@@ -324,7 +331,8 @@ Deno.test("Interesting Scenario: Syncing with an empty calendar and deleting a m
     console.log("Result: Success");
 
     // 2. Verify external slot is gone, manual slot remains
-    let slots = await schedule._getSlots({ user: userF });
+    let slotsResult = await schedule._getSlots({ user: userF });
+    let slots = slotsResult.map(s => s.slot);
     console.log(
       `Query: _getSlots for user ${userF}. Found ${slots.length} slots.`,
     );
@@ -338,7 +346,8 @@ Deno.test("Interesting Scenario: Syncing with an empty calendar and deleting a m
     console.log("Result: Success");
 
     // 4. Verify user has no slots left
-    slots = await schedule._getSlots({ user: userF });
+    slotsResult = await schedule._getSlots({ user: userF });
+    slots = slotsResult.map(s => s.slot);
     console.log(
       `Query: _getSlots for user ${userF}. Found ${slots.length} slots.`,
     );

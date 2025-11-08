@@ -1,438 +1,3616 @@
 # Questioning
 
-[@UserAccount](../concepts/UserAccount/UserAccount.md)
-[@Focus](../concepts/Focus/Focus.md)
-[@Planner](../concepts/Planner/Planner.md)
-[@Tasks](../concepts/Tasks/Tasks.md)
-[@Schedule](../concepts/Schedule/Schedule.md)
+[@README](../../src/concepts/Requesting/README.md)
+[@sync-background](../tools/sync-background.md)
+
+
+#### passthrough:
+
+```typescript
+/**
+
+ * The Requesting concept exposes passthrough routes by default,
+
+ * which allow POSTs to the route:
+
+ *
+
+ * /{REQUESTING_BASE_URL}/{Concept name}/{action or query}
+
+ *
+
+ * to passthrough directly to the concept action or query.
+
+ * This is a convenient and natural way to expose concepts to
+
+ * the world, but should only be done intentionally for public
+
+ * actions and queries.
+
+ *
+
+ * This file allows you to explicitly set inclusions and exclusions
+
+ * for passthrough routes:
+
+ * - inclusions: those that you can justify their inclusion
+
+ * - exclusions: those to exclude, using Requesting routes instead
+
+ */
+
+  
+
+/**
+
+ * INCLUSIONS
+
+ *
+
+ * Each inclusion must include a justification for why you think
+
+ * the passthrough is appropriate (e.g. public query).
+
+ *
+
+ * inclusions = {"route": "justification"}
+
+ */
+
+  
+
+export const inclusions: Record<string, string> = {
+
+  // UserAccount.register is a standalone, public action for new users to create an account.
+
+  // This assumes a user flow where registration is followed by a redirect to a login page,
+
+  // rather than an automatic login.
+
+  "/api/UserAccount/register": "Public action for new users to sign up.",
+
+};
+
+  
+
+/**
+
+ * EXCLUSIONS
+
+ *
+
+ * Excluded routes fall back to the Requesting concept, and will
+
+ * instead trigger the normal Requesting.request action. As this
+
+ * is the intended behavior, no justification is necessary.
+
+ *
+
+ * exclusions = ["route"]
+
+ */
+
+  
+
+export const exclusions: Array<string> = [
+
+  // UserAccount.login MUST be excluded because it requires coordination
+
+  // with the Sessioning concept to create a session token upon successful authentication.
+
+  "/api/UserAccount/login",
+
+  
+
+  // All other actions below require an active session to authorize the request,
+
+  // which is handled by synchronizations.
+
+  "/api/Focus/setCurrentTask",
+
+  "/api/Focus/clearCurrentTask",
+
+  "/api/Focus/getCurrentTask",
+
+  
+
+  "/api/Planner/planDay",
+
+  "/api/Planner/replan",
+
+  "/api/Planner/clearDay",
+
+  "/api/Planner/deleteAllForUser",
+
+  "/api/Planner/getNextTask",
+
+  "/api/Planner/_getScheduledTasks",
+
+  "/api/Planner/_scheduleTasks",
+
+  "/api/Planner/_getAvailableSlots",
+
+  
+
+  "/api/Schedule/blockTime",
+
+  "/api/Schedule/updateSlot",
+
+  "/api/Schedule/deleteSlot",
+
+  "/api/Schedule/syncCalendar",
+
+  "/api/Schedule/deleteAllForUser",
+
+  "/api/Schedule/_getSlots",
+
+  
+
+  "/api/Sessioning/create",
+
+  "/api/Sessioning/delete",
+
+  "/api/Sessioning/_getUser",
+
+  
+
+  "/api/Tasks/createUserTasks",
+
+  "/api/Tasks/createTask",
+
+  "/api/Tasks/updateTask",
+
+  "/api/Tasks/reorderTasks",
+
+  "/api/Tasks/markTaskComplete",
+
+  "/api/Tasks/deleteTask",
+
+  "/api/Tasks/deleteAllForUser",
+
+  "/api/Tasks/_getTasks",
+
+  "/api/Tasks/_getRemainingTasks",
+
+  
+
+  "/api/UserAccount/updateProfile",
+
+  "/api/UserAccount/deleteAccount",
+
+  "/api/UserAccount/_getUserProfile",
+
+  "/api/UserAccount/_findUserByEmail",
+
+];
+```
 
 
 
-# prompt: I'm looking at the Schedule concept rn and I feel like it needs some distinction between the manually added tasks and the ones from the external calendar
 
+#### Sessioning:
+```typescript
+import { Collection, Db } from "npm:mongodb";
+
+import { freshID } from "@utils/database.ts";
+
+import { Empty, ID } from "@utils/types.ts";
+
+  
+
+// Define generic types for the concept
+
+type User = ID;
+
+type Session = ID;
+
+  
+
+// Define the shape of the document in the 'sessions' collection
+
+/**
+
+ * a set of `Session`s with
+
+ *   a `user` User
+
+ */
+
+interface SessionDoc {
+
+  _id: Session;
+
+  user: User;
+
+}
+
+  
+
+const PREFIX = "Sessioning" + ".";
+
+  
+
+/**
+
+ * @concept Sessioning
+
+ * @purpose To maintain a user's logged-in state across multiple requests without re-sending credentials.
+
+ */
+
+export default class SessioningConcept {
+
+  public readonly sessions: Collection<SessionDoc>;
+
+  
+
+  constructor(private readonly db: Db) {
+
+    this.sessions = this.db.collection<SessionDoc>(PREFIX + "sessions");
+
+  }
+
+  
+
+  /**
+
+   * create (user: User): (session: Session)
+
+   *
+
+   * **requires**: true.
+
+   *
+
+   * **effects**: creates a new Session `s`; associates it with the given `user`; returns `s` as `session`.
+
+   */
+
+  async create({ user }: { user: User }): Promise<{ session: Session }> {
+
+    const newSessionId = freshID() as Session;
+
+    const doc: SessionDoc = {
+
+      _id: newSessionId,
+
+      user: user,
+
+    };
+
+    await this.sessions.insertOne(doc);
+
+    return { session: newSessionId };
+
+  }
+
+  
+
+  /**
+
+   * delete (session: Session): ()
+
+   *
+
+   * **requires**: the given `session` exists.
+
+   *
+
+   * **effects**: removes the session `s`.
+
+   */
+
+  async delete(
+
+    { session }: { session: Session },
+
+  ): Promise<Empty | { error: string }> {
+
+    const result = await this.sessions.deleteOne({ _id: session });
+
+  
+
+    if (result.deletedCount === 0) {
+
+      return { error: `Session with id ${session} not found` };
+
+    }
+
+  
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * _getUser (session: Session): (user: User)
+
+   *
+
+   * **requires**: the given `session` exists.
+
+   *
+
+   * **effects**: returns the user associated with the session.
+
+   */
+
+  async _getUser(
+
+    { session }: { session: Session },
+
+  ): Promise<Array<{ user: User }> | [{ error: string }]> {
+
+    const sessionDoc = await this.sessions.findOne({ _id: session });
+
+  
+
+    if (!sessionDoc) {
+
+      return [{ error: `Session with id ${session} not found` }];
+
+    }
+
+  
+
+    return [{ user: sessionDoc.user }];
+
+  }
+
+}
+```
+#### ScheduleConcept:
+```typescript
+import { Collection, Db } from "npm:mongodb";
+
+import { freshID } from "../../utils/database.ts";
+
+import { Empty, ID } from "../../utils/types.ts";
+
+  
+
+// Generic types used by this concept
+
+type User = ID;
+
+type BusySlotId = ID;
+
+  
+
+// Define a constant for the collection prefix
+
+const PREFIX = "Schedule";
+
+  
+
+/**
+
+ * Enum to represent the origin of a busy slot, ensuring type safety.
+
+ */
+
+enum SlotOrigin {
+
+  MANUAL = "MANUAL",
+
+  EXTERNAL = "EXTERNAL",
+
+}
+
+  
+
+/**
+
+ * Represents an event from an external calendar system.
+
+ * This is used as the shape for input to the syncCalendar action.
+
+ */
+
+interface ExternalEvent {
+
+  startTime: Date;
+
+  endTime: Date;
+
+  description: string;
+
+}
+
+  
+
+/**
+
+ * State: a set of BusySlots with an owner, start/end times, a description, and an origin.
+
+ */
+
+interface BusySlot {
+
+  _id: BusySlotId;
+
+  owner: User;
+
+  startTime: Date;
+
+  endTime: Date;
+
+  description: string;
+
+  origin: SlotOrigin;
+
+}
+
+  
+
+/**
+
+ * @purpose To represent a user's availability by combining non-negotiable, externally-scheduled commitments with manual time blocks.
+
+ */
+
+export default class ScheduleConcept {
+
+  public readonly busySlots: Collection<BusySlot>;
+
+  
+
+  constructor(private readonly db: Db) {
+
+    this.busySlots = this.db.collection<BusySlot>(`${PREFIX}.busySlots`);
+
+  }
+
+  
+
+  /**
+
+   * @effect Creates a new BusySlot for the user with the given details and sets origin to MANUAL.
+
+   */
+
+  async blockTime(
+
+    { user, startTime, endTime, description }: {
+
+      user: User;
+
+      startTime: Date;
+
+      endTime: Date;
+
+      description: string;
+
+    },
+
+  ): Promise<{ slot: BusySlotId } | { error: string }> {
+
+    if (startTime >= endTime) {
+
+      return { error: "Start time must be before end time." };
+
+    }
+
+  
+
+    const newSlotId = freshID() as BusySlotId;
+
+    const newSlot: BusySlot = {
+
+      _id: newSlotId,
+
+      owner: user,
+
+      startTime,
+
+      endTime,
+
+      description,
+
+      origin: SlotOrigin.MANUAL,
+
+    };
+
+  
+
+    const result = await this.busySlots.insertOne(newSlot);
+
+    if (!result.acknowledged) {
+
+      return { error: "Failed to create busy slot." };
+
+    }
+
+    return { slot: newSlotId };
+
+  }
+
+  
+
+  /**
+
+   * @requires slot.origin is MANUAL
+
+   * @effect Modifies the properties of a manually created BusySlot.
+
+   */
+
+  async updateSlot(
+
+    { slotId, newStartTime, newEndTime, newDescription }: {
+
+      slotId: BusySlotId;
+
+      newStartTime: Date;
+
+      newEndTime: Date;
+
+      newDescription: string;
+
+    },
+
+  ): Promise<Empty | { error: string }> {
+
+    if (newStartTime >= newEndTime) {
+
+      return { error: "Start time must be before end time." };
+
+    }
+
+  
+
+    const existingSlot = await this.busySlots.findOne({ _id: slotId });
+
+  
+
+    if (!existingSlot) {
+
+      return { error: "Slot not found." };
+
+    }
+
+  
+
+    if (existingSlot.origin !== SlotOrigin.MANUAL) {
+
+      return { error: "Cannot update a slot with an external origin." };
+
+    }
+
+  
+
+    const result = await this.busySlots.updateOne({ _id: slotId }, {
+
+      $set: {
+
+        startTime: newStartTime,
+
+        endTime: newEndTime,
+
+        description: newDescription,
+
+      },
+
+    });
+
+  
+
+    if (result.matchedCount === 0) {
+
+      return { error: "Slot not found or could not be updated." };
+
+    }
+
+  
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * @requires slot.origin is MANUAL
+
+   * @effect Removes a manually created BusySlot.
+
+   */
+
+  async deleteSlot(
+
+    { slotId }: { slotId: BusySlotId },
+
+  ): Promise<Empty | { error: string }> {
+
+    const existingSlot = await this.busySlots.findOne({ _id: slotId });
+
+  
+
+    if (!existingSlot) {
+
+      return { error: "Slot not found." };
+
+    }
+
+  
+
+    if (existingSlot.origin !== SlotOrigin.MANUAL) {
+
+      return { error: "Cannot delete a slot with an external origin." };
+
+    }
+
+  
+
+    const result = await this.busySlots.deleteOne({ _id: slotId });
+
+    if (result.deletedCount === 0) {
+
+      return { error: "Slot could not be deleted." };
+
+    }
+
+  
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * @effect Updates the user's schedule to match their external calendar without affecting MANUAL blocks.
+
+   * This is achieved by removing all existing EXTERNAL slots and creating new ones from the provided events.
+
+   */
+
+  async syncCalendar(
+
+    { user, externalEvents }: { user: User; externalEvents: ExternalEvent[] },
+
+  ): Promise<Empty | { error: string }> {
+
+    // This operation is performed as two separate steps for clarity. In a production system,
+
+    // this should be wrapped in a database transaction to ensure atomicity.
+
+  
+
+    // 1. Delete all existing EXTERNAL slots for the user.
+
+    await this.busySlots.deleteMany({
+
+      owner: user,
+
+      origin: SlotOrigin.EXTERNAL,
+
+    });
+
+  
+
+    // 2. Create new slots from the externalEvents array if it's not empty.
+
+    if (externalEvents && externalEvents.length > 0) {
+
+      const newSlots: BusySlot[] = externalEvents
+
+        .filter((event) => event.startTime < event.endTime) // Basic validation
+
+        .map((event) => ({
+
+          _id: freshID() as BusySlotId,
+
+          owner: user,
+
+          startTime: event.startTime,
+
+          endTime: event.endTime,
+
+          description: event.description,
+
+          origin: SlotOrigin.EXTERNAL,
+
+        }));
+
+  
+
+      if (newSlots.length > 0) {
+
+        await this.busySlots.insertMany(newSlots);
+
+      }
+
+    }
+
+  
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * @effect Removes all busy slots (both MANUAL and EXTERNAL) for the user.
+
+   */
+
+  async deleteAllForUser({ user }: { user: User }): Promise<Empty> {
+
+    await this.busySlots.deleteMany({ owner: user });
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * @query _getSlots (user: User): (slot: BusySlot)
+
+   * @effect Returns all busy slots for the user, regardless of origin.
+
+   */
+
+  async _getSlots({ user }: { user: User }): Promise<{ slot: BusySlot }[]> {
+
+    const slots = await this.busySlots.find({ owner: user }).toArray();
+
+    return slots.map((slot) => ({ slot }));
+
+  }
+
+}
+```
+#### PlannerConcept:
+```typescript
+import { Collection, Db } from "npm:mongodb";
+
+import { Empty, ID } from "@utils/types.ts";
+
+import { freshID } from "@utils/database.ts";
+
+  
+
+// Generic parameters for the Planner concept
+
+type User = ID;
+
+type Task = ID;
+
+  
+
+// Supporting types for actions
+
+type DateTime = Date;
+
+  
+
+/**
+
+ * Represents a block of time that is unavailable for scheduling.
+
+ */
+
+interface BusySlot {
+
+  start: DateTime;
+
+  end: DateTime;
+
+}
+
+  
+
+/**
+
+ * Represents a task with its required duration in minutes.
+
+ * This is necessary for the planner to know how much time to allocate.
+
+ */
+
+interface TaskWithDuration {
+
+  id: Task;
+
+  duration: number; // in minutes
+
+}
+
+  
+
+/**
+
+ * State: A set of ScheduledTasks with an owner, a task, and a planned time window.
+
+ * This represents a task that has been placed onto the user's schedule.
+
+ */
+
+interface ScheduledTask {
+
+  _id: ID;
+
+  owner: User;
+
+  task: Task;
+
+  plannedStart: DateTime;
+
+  plannedEnd: DateTime;
+
+}
+
+  
+
+const PREFIX = "Planner.";
+
+  
+
+/**
+
+ * concept: Planner
+
+ * purpose: having a realistic, time-based plan for a user's tasks
+
+ */
+
+export default class PlannerConcept {
+
+  private readonly scheduledTasks: Collection<ScheduledTask>;
+
+  // Dependency for providing the current time. Makes the concept testable.
+
+  private readonly timeProvider: () => Date;
+
+  
+
+  constructor(db: Db, timeProvider: () => Date = () => new Date()) {
+
+    this.scheduledTasks = db.collection<ScheduledTask>(
+
+      PREFIX + "scheduledTasks",
+
+    );
+
+    this.timeProvider = timeProvider;
+
+  }
+
+  
+
+  /**
+
+   * Schedules a user's tasks for a full day.
+
+   * effect: creates a new, full-day schedule by assigning tasks to available time slots; returns the first task, if any.
+
+   * This action first clears the user's existing schedule for the day before planning.
+
+   */
+
+  async planDay(
+
+    { user, tasks, busySlots }: {
+
+      user: User;
+
+      tasks: TaskWithDuration[];
+
+      busySlots: BusySlot[];
+
+    },
+
+  ): Promise<{ firstTask?: Task } | { error: string }> {
+
+    // Convert ISO strings to Date objects (in case they came from JSON)
+
+    const busySlotsWithDates = busySlots.map((slot) => ({
+
+      start: new Date(slot.start),
+
+      end: new Date(slot.end),
+
+    }));
+
+  
+
+    await this.clearDay({ user });
+
+  
+
+    const now = this.timeProvider();
+
+    const startOfToday = new Date(
+
+      now.getFullYear(),
+
+      now.getMonth(),
+
+      now.getDate(),
+
+      0,
+
+      0,
+
+      0,
+
+    );
+
+    const endOfToday = new Date(
+
+      now.getFullYear(),
+
+      now.getMonth(),
+
+      now.getDate(),
+
+      23,
+
+      59,
+
+      59,
+
+    );
+
+  
+
+    const planFrom = now > startOfToday ? now : startOfToday;
+
+  
+
+    if (planFrom >= endOfToday) {
+
+      return {};
+
+    }
+
+  
+
+    return this._scheduleTasks(
+
+      user,
+
+      tasks,
+
+      busySlotsWithDates,
+
+      planFrom,
+
+      endOfToday,
+
+    );
+
+  }
+
+  
+
+  /**
+
+   * Generates a new plan from the current time forward.
+
+   * effect: discards remaining scheduled tasks and generates a new plan from the current time forward; returns the first task, if any.
+
+   */
+
+  async replan(
+
+    { user, tasks, busySlots }: {
+
+      user: User;
+
+      tasks: TaskWithDuration[];
+
+      busySlots: BusySlot[];
+
+    },
+
+  ): Promise<{ firstTask?: Task } | { error: string }> {
+
+    // Convert ISO strings to Date objects (in case they came from JSON)
+
+    const busySlotsWithDates = busySlots.map((slot) => ({
+
+      start: new Date(slot.start),
+
+      end: new Date(slot.end),
+
+    }));
+
+  
+
+    const now = this.timeProvider();
+
+    await this.scheduledTasks.deleteMany({
+
+      owner: user,
+
+      plannedStart: { $gte: now },
+
+    });
+
+  
+
+    const endOfDay = new Date(
+
+      now.getFullYear(),
+
+      now.getMonth(),
+
+      now.getDate(),
+
+      23,
+
+      59,
+
+      59,
+
+    );
+
+  
+
+    if (now >= endOfDay) {
+
+      return {};
+
+    }
+
+  
+
+    return this._scheduleTasks(user, tasks, busySlotsWithDates, now, endOfDay);
+
+  }
+
+  
+
+  /**
+
+   * Removes all scheduled tasks for a given user for the current day.
+
+   * effect: removes all ScheduledTasks for the given user for the current day.
+
+   */
+
+  async clearDay({ user }: { user: User }): Promise<Empty> {
+
+    const now = this.timeProvider();
+
+    const startOfDay = new Date(
+
+      now.getFullYear(),
+
+      now.getMonth(),
+
+      now.getDate(),
+
+      0,
+
+      0,
+
+      0,
+
+    );
+
+    const endOfDay = new Date(
+
+      now.getFullYear(),
+
+      now.getMonth(),
+
+      now.getDate(),
+
+      23,
+
+      59,
+
+      59,
+
+    );
+
+  
+
+    await this.scheduledTasks.deleteMany({
+
+      owner: user,
+
+      plannedStart: { $gte: startOfDay, $lte: endOfDay },
+
+    });
+
+  
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * Removes all scheduled tasks for a given user.
+
+   * effect: removes all scheduled tasks for the user.
+
+   */
+
+  async deleteAllForUser({ user }: { user: User }): Promise<Empty> {
+
+    await this.scheduledTasks.deleteMany({ owner: user });
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * Finds the task scheduled immediately after a completed task.
+
+   * effect: finds the task scheduled immediately after the completedTask and returns it.
+
+   */
+
+  async getNextTask(
+
+    { user, completedTask }: { user: User; completedTask: Task },
+
+  ): Promise<{ nextTask?: Task } | { error: string }> {
+
+    const lastTask = await this.scheduledTasks.findOne({
+
+      owner: user,
+
+      task: completedTask,
+
+    });
+
+  
+
+    if (!lastTask) {
+
+      return { error: "Completed task not found in schedule." };
+
+    }
+
+  
+
+    const nextTask = await this.scheduledTasks.findOne(
+
+      {
+
+        owner: user,
+
+        plannedStart: { $gte: lastTask.plannedEnd },
+
+      },
+
+      {
+
+        sort: { plannedStart: 1 },
+
+      },
+
+    );
+
+  
+
+    return { nextTask: nextTask?.task };
+
+  }
+
+  
+
+  /**
+
+   * @query _getScheduledTasks
+
+   * Retrieves all scheduled tasks for a given user.
+
+   * @returns A list of scheduled tasks, sorted by start time.
+
+   */
+
+  async _getScheduledTasks(
+
+    { user }: { user: User },
+
+  ): Promise<{ tasks: ScheduledTask[] }[]> { // CORRECTED RETURN TYPE
+
+    const tasks = await this.scheduledTasks
+
+      .find({ owner: user }, {
+
+        sort: { plannedStart: 1 },
+
+      })
+
+      .toArray();
+
+  
+
+    // CORRECT: Return the result wrapped in an array.
+
+    // Even if there are no tasks, this will correctly return [{ tasks: [] }],
+
+    // which the sync engine handles perfectly.
+
+    return [{ tasks }];
+
+  }
+
+  
+
+  /**
+
+   * Core scheduling logic to fit tasks into available time slots.
+
+   */
+
+  private async _scheduleTasks(
+
+    user: User,
+
+    tasks: TaskWithDuration[],
+
+    busySlots: BusySlot[],
+
+    planFrom: DateTime,
+
+    planUntil: DateTime,
+
+  ): Promise<{ firstTask?: Task }> {
+
+    const availableSlots = this._getAvailableSlots(
+
+      planFrom,
+
+      planUntil,
+
+      busySlots,
+
+    );
+
+    const newScheduledTasks: ScheduledTask[] = [];
+
+  
+
+    for (const task of tasks) {
+
+      const taskDurationMillis = task.duration * 60 * 1000;
+
+  
+
+      for (const slot of availableSlots) {
+
+        const slotDurationMillis = slot.end.getTime() - slot.start.getTime();
+
+  
+
+        if (slotDurationMillis >= taskDurationMillis) {
+
+          const plannedStart = slot.start;
+
+          const plannedEnd = new Date(
+
+            plannedStart.getTime() + taskDurationMillis,
+
+          );
+
+  
+
+          newScheduledTasks.push({
+
+            _id: freshID(),
+
+            owner: user,
+
+            task: task.id,
+
+            plannedStart,
+
+            plannedEnd,
+
+          });
+
+  
+
+          slot.start = plannedEnd;
+
+          break;
+
+        }
+
+      }
+
+    }
+
+  
+
+    if (newScheduledTasks.length > 0) {
+
+      await this.scheduledTasks.insertMany(newScheduledTasks);
+
+    }
+
+  
+
+    return {
+
+      firstTask: newScheduledTasks.length > 0
+
+        ? newScheduledTasks[0].task
+
+        : undefined,
+
+    };
+
+  }
+
+  
+
+  /**
+
+   * Calculates available time slots within a given window, excluding busy periods.
+
+   */
+
+  private _getAvailableSlots(
+
+    start: DateTime,
+
+    end: DateTime,
+
+    busySlots: BusySlot[],
+
+  ): BusySlot[] {
+
+    const availableSlots: BusySlot[] = [];
+
+    let cursor = start;
+
+  
+
+    const sortedBusy = busySlots.sort((a, b) =>
+
+      a.start.getTime() - b.start.getTime()
+
+    );
+
+  
+
+    for (const busy of sortedBusy) {
+
+      if (busy.start > cursor) {
+
+        availableSlots.push({ start: cursor, end: busy.start });
+
+      }
+
+      cursor = new Date(Math.max(cursor.getTime(), busy.end.getTime()));
+
+    }
+
+  
+
+    if (cursor < end) {
+
+      availableSlots.push({ start: cursor, end: end });
+
+    }
+
+  
+
+    return availableSlots;
+
+  }
+
+}
+```
+#### TasksConcept:
+```typescript
+// file: src/Tasks/TasksConcept.ts
+
+import { Collection, Db } from "npm:mongodb";
+
+import { Empty, ID } from "@utils/types.ts";
+
+import { freshID } from "@utils/database.ts";
+
+  
+
+/**
+
+ * concept Tasks [User]
+
+ * purpose to capture and organize a user's tasks
+
+ */
+
+  
+
+// Declare collection prefix, use concept name
+
+const PREFIX = "Tasks" + ".";
+
+  
+
+// Generic type of this concept
+
+type User = ID;
+
+type Task = ID; // Task ID
+
+  
+
+/**
+
+ * a set of Tasks with
+
+ *   an owner User
+
+ *   a title String
+
+ *   an optional description String
+
+ *   an optional dueDate Date
+
+ *   an optional estimatedDuration Number
+
+ *   a status of TODO or DONE
+
+ */
+
+export interface TaskDocument {
+
+  _id: Task;
+
+  owner: User;
+
+  title: string;
+
+  description?: string;
+
+  dueDate?: Date;
+
+  estimatedDuration?: number;
+
+  status: "TODO" | "DONE";
+
+}
+
+  
+
+/**
+
+ * a UserTasks element of User with
+
+ *   an orderedTasks seq of Tasks
+
+ */
+
+export interface UserTasksDocument {
+
+  _id: User; // The User ID is the key for this document
+
+  orderedTasks: Task[]; // Array of Task IDs
+
+}
+
+  
+
+export default class TasksConcept {
+
+  private tasks: Collection<TaskDocument>;
+
+  private userTasks: Collection<UserTasksDocument>;
+
+  
+
+  constructor(private readonly db: Db) {
+
+    this.tasks = this.db.collection(PREFIX + "tasks");
+
+    this.userTasks = this.db.collection(PREFIX + "userTasks");
+
+  }
+
+  
+
+  /**
+
+   * createUserTasks (user: User)
+
+   * purpose: Creates an empty task list for a new user.
+
+   * requires: the user doesn't already have a list of tasks created
+
+   * effect: creates an empty UserTasks element for a new user
+
+   */
+
+  async createUserTasks(
+
+    { user }: { user: User },
+
+  ): Promise<Empty | { error: string }> {
+
+    const existingUserTasks = await this.userTasks.findOne({ _id: user });
+
+    if (existingUserTasks) {
+
+      return { error: `Task list already exists for user ${user}` };
+
+    }
+
+  
+
+    await this.userTasks.insertOne({
+
+      _id: user,
+
+      orderedTasks: [],
+
+    });
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * createTask (owner: User, title: String, description: optional String, dueDate: optional Date, estimatedDuration: optional Number)
+
+   * purpose: Creates a new task for a user.
+
+   * effect: creates a new task with status TODO and adds it to the user's list
+
+   */
+
+  async createTask(
+
+    {
+
+      owner,
+
+      title,
+
+      description,
+
+      dueDate,
+
+      estimatedDuration,
+
+    }: {
+
+      owner: User;
+
+      title: string;
+
+      description?: string;
+
+      dueDate?: Date;
+
+      estimatedDuration?: number;
+
+    },
+
+  ): Promise<{ task: Task } | { error: string }> {
+
+    const userTasks = await this.userTasks.findOne({ _id: owner });
+
+    if (!userTasks) {
+
+      return {
+
+        error: `No task list found for user ${owner}. Please create one first.`,
+
+      };
+
+    }
+
+  
+
+    const newTaskId = freshID() as Task;
+
+    const newTask: TaskDocument = {
+
+      _id: newTaskId,
+
+      owner,
+
+      title,
+
+      description,
+
+      dueDate,
+
+      estimatedDuration,
+
+      status: "TODO",
+
+    };
+
+  
+
+    await this.tasks.insertOne(newTask);
+
+    await this.userTasks.updateOne(
+
+      { _id: owner },
+
+      { $push: { orderedTasks: newTaskId } },
+
+    );
+
+  
+
+    return { task: newTaskId };
+
+  }
+
+  
+
+  /**
+
+   * updateTask (task: Task, newTitle: optional String, newDescription: optional String, newDueDate: optional Date, newEstimatedDuration: optional Number)
+
+   * purpose: Modifies the details of an existing task.
+
+   * effect: modifies the details of an existing task
+
+   */
+
+  async updateTask(
+
+    {
+
+      task,
+
+      newTitle,
+
+      newDescription,
+
+      newDueDate,
+
+      newEstimatedDuration,
+
+    }: {
+
+      task: Task;
+
+      newTitle?: string;
+
+      newDescription?: string;
+
+      newDueDate?: Date;
+
+      newEstimatedDuration?: number;
+
+    },
+
+  ): Promise<Empty | { error: string }> {
+
+    const updateFields: Partial<TaskDocument> = {};
+
+    if (newTitle !== undefined) updateFields.title = newTitle;
+
+    if (newDescription !== undefined) updateFields.description = newDescription;
+
+    if (newDueDate !== undefined) updateFields.dueDate = newDueDate;
+
+    if (newEstimatedDuration !== undefined) {
+
+      updateFields.estimatedDuration = newEstimatedDuration;
+
+    }
+
+  
+
+    if (Object.keys(updateFields).length === 0) {
+
+      return { error: "No fields provided for update." };
+
+    }
+
+  
+
+    const result = await this.tasks.updateOne(
+
+      { _id: task },
+
+      { $set: updateFields },
+
+    );
+
+  
+
+    if (result.matchedCount === 0) {
+
+      return { error: `Task ${task} not found.` };
+
+    }
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * reorderTasks (user: User, newOrder: seq of Tasks)
+
+   * purpose: Updates the order of a user's tasks.
+
+   * effect: updates the order of the user's tasks
+
+   */
+
+  async reorderTasks(
+
+    { user, newOrder }: { user: User; newOrder: Task[] },
+
+  ): Promise<Empty | { error: string }> {
+
+    const userTasks = await this.userTasks.findOne({ _id: user });
+
+    if (!userTasks) {
+
+      return { error: `No task list found for user ${user}.` };
+
+    }
+
+  
+
+    // Validate that all tasks in newOrder belong to this user and that it's a complete list.
+
+    const currentTasks = await this.tasks.find({ owner: user }).toArray();
+
+    const currentTaskIds = new Set(currentTasks.map((t) => t._id));
+
+  
+
+    if (newOrder.length !== currentTaskIds.size) {
+
+      return {
+
+        error: "New order list does not contain all or only the user's tasks.",
+
+      };
+
+    }
+
+  
+
+    const newOrderSet = new Set(newOrder);
+
+    if (newOrderSet.size !== newOrder.length) {
+
+      return { error: "New order list contains duplicate task IDs." };
+
+    }
+
+  
+
+    for (const taskId of newOrder) {
+
+      if (!currentTaskIds.has(taskId)) {
+
+        return {
+
+          error: `Task ${taskId} in new order does not belong to user ${user}.`,
+
+        };
+
+      }
+
+    }
+
+  
+
+    await this.userTasks.updateOne(
+
+      { _id: user },
+
+      { $set: { orderedTasks: newOrder } },
+
+    );
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * markTaskComplete (task: Task)
+
+   * purpose: Marks an existing task as complete.
+
+   * effect: sets the task's status to DONE
+
+   */
+
+  async markTaskComplete(
+
+    { task }: { task: Task },
+
+  ): Promise<Empty | { error: string }> {
+
+    const result = await this.tasks.updateOne(
+
+      { _id: task },
+
+      { $set: { status: "DONE" } },
+
+    );
+
+  
+
+    if (result.matchedCount === 0) {
+
+      return { error: `Task ${task} not found.` };
+
+    }
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * deleteTask (task: Task)
+
+   * purpose: Removes a specific task from the system and the user's list.
+
+   * effect: removes the task from the system
+
+   */
+
+  async deleteTask(
+
+    { task }: { task: Task },
+
+  ): Promise<Empty | { error: string }> {
+
+    const taskToDelete = await this.tasks.findOne({ _id: task });
+
+    if (!taskToDelete) {
+
+      return { error: `Task ${task} not found.` };
+
+    }
+
+  
+
+    const owner = taskToDelete.owner;
+
+  
+
+    await this.tasks.deleteOne({ _id: task });
+
+    await this.userTasks.updateOne(
+
+      { _id: owner },
+
+      { $pull: { orderedTasks: task } },
+
+    );
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * deleteAllForUser (user: User)
+
+   * purpose: Removes all tasks associated with a user and their task list.
+
+   * effect: removes all tasks associated with the user
+
+   */
+
+  async deleteAllForUser(
+
+    { user }: { user: User },
+
+  ): Promise<Empty | { error: string }> {
+
+    const resultTasks = await this.tasks.deleteMany({ owner: user });
+
+    const resultUserTasks = await this.userTasks.deleteOne({ _id: user });
+
+  
+
+    if (resultTasks.deletedCount === 0 && resultUserTasks.deletedCount === 0) {
+
+      return { error: `No tasks or task list found for user ${user}.` };
+
+    }
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * _getTasks (user: User): (tasks: seq of TaskDocument)
+
+   * purpose: Retrieves a user's full ordered list of tasks.
+
+   * effect: returns the user's full ordered list of tasks
+
+   */
+
+  async _getTasks(
+
+    { user }: { user: User },
+
+  ): Promise<{ tasks: TaskDocument[] }[]> {
+
+    const userTasks = await this.userTasks.findOne({ _id: user });
+
+    if (!userTasks) {
+
+      return []; // Return empty array if user has no task list
+
+    }
+
+  
+
+    if (userTasks.orderedTasks.length === 0) {
+
+      return [{ tasks: [] }];
+
+    }
+
+  
+
+    const taskDocuments = await this.tasks.find({
+
+      _id: { $in: userTasks.orderedTasks },
+
+    }).toArray();
+
+  
+
+    // The database query doesn't preserve order, so we must re-order here.
+
+    const taskMap = new Map(
+
+      taskDocuments.map((task) => [task._id.toString(), task]),
+
+    );
+
+    const orderedTasks = userTasks.orderedTasks
+
+      .map((taskId) => taskMap.get(taskId.toString()))
+
+      .filter((task): task is TaskDocument => task !== undefined);
+
+  
+
+    return [{ tasks: orderedTasks }];
+
+  }
+
+  
+
+  /**
+
+   * _getRemainingTasks (user: User): (tasks: seq of TaskDocument)
+
+   * purpose: Retrieves a user's ordered list of tasks that are not yet complete.
+
+   * effect: returns the user's ordered list of tasks with status TODO
+
+   */
+
+  async _getRemainingTasks(
+
+    { user }: { user: User },
+
+  ): Promise<{ tasks: TaskDocument[] }[]> {
+
+    const allUserTasksResult = await this._getTasks({ user });
+
+  
+
+    if (allUserTasksResult.length === 0) {
+
+      return []; // User has no task list or no tasks
+
+    }
+
+  
+
+    const allTasks = allUserTasksResult[0].tasks;
+
+    const remainingTasks = allTasks.filter(
+
+      (task) => task.status === "TODO",
+
+    );
+
+  
+
+    return [{ tasks: remainingTasks }];
+
+  }
+
+}
+```
+#### FocusConcept:
+```typescript
+import { Collection, Db } from "npm:mongodb";
+
+import { Empty, ID } from "@utils/types.ts";
+
+  
+
+// Define generic type parameters for this concept
+
+type User = ID;
+
+type Task = ID;
+
+  
+
+// Define the prefix for MongoDB collections to namespace them for this concept
+
+const PREFIX = "Focus.";
+
+  
+
+/**
+
+ * Represents the state of the Focus concept.
+
+ * Maps a User to their single current Task.
+
+ */
+
+interface CurrentTaskDoc {
+
+  _id: User;
+
+  task: Task;
+
+}
+
+  
+
+/**
+
+ * Focus Concept
+
+ *
+
+ * @purpose To eliminate decision fatigue by presenting the single task a user should be working on right now.
+
+ * @principle It presents the currently scheduled task to the user, providing a single point of focus.
+
+ */
+
+export default class FocusConcept {
+
+  private readonly currentTasks: Collection<CurrentTaskDoc>;
+
+  
+
+  constructor(private readonly db: Db) {
+
+    this.currentTasks = this.db.collection<CurrentTaskDoc>(
+
+      PREFIX + "currentTasks",
+
+    );
+
+  }
+
+  
+
+  /**
+
+   * Sets the specified task as the user's current focus.
+
+   * If the user already has a focus task, it is replaced.
+
+   *
+
+   * @param user The ID of the user.
+
+   * @param task The ID of the task to set as the focus.
+
+   * @returns An empty object on success.
+
+   */
+
+  async setCurrentTask(
+
+    { user, task }: { user: User; task: Task },
+
+  ): Promise<Empty> {
+
+    // This action can always be performed.
+
+    // requires: true
+
+  
+
+    // effects: sets the specified task as the user's current focus
+
+    await this.currentTasks.updateOne(
+
+      { _id: user },
+
+      { $set: { task: task } },
+
+      { upsert: true },
+
+    );
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * Removes the current task for the user, leaving them with no focus.
+
+   *
+
+   * @param user The ID of the user whose focus should be cleared.
+
+   * @returns An empty object on success.
+
+   */
+
+  async clearCurrentTask({ user }: { user: User }): Promise<Empty> {
+
+    // This action can always be performed.
+
+    // requires: true
+
+  
+
+    // effects: removes the current task for the user
+
+    await this.currentTasks.deleteOne({ _id: user });
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * @query _getCurrentTask
+
+   * Retrieves the user's currently focused task.
+
+   * @returns An array containing the user's current task, or an empty array if none is set.
+
+   */
+
+  async _getCurrentTask({ user }: { user: User }): Promise<{ task: Task }[]> {
+
+    const focusDoc = await this.currentTasks.findOne({ _id: user });
+
+    if (!focusDoc) {
+
+      return [];
+
+    }
+
+    return [{ task: focusDoc.task }];
+
+  }
+
+}
+```
+
+
+
+#### UserAccountConcept:
+```typescript
+// file: src/UserAccount/UserAccountConcept.ts
+
+  
+
+import { Collection, Db } from "npm:mongodb";
+
+import { Empty, ID } from "@utils/types.ts";
+
+import { freshID } from "@utils/database.ts";
+
+import * as bcrypt from "bcrypt";
+
+  
+
+/**
+
+ * @concept UserAccount
+
+ * @purpose to securely identify and authenticate users
+
+ * @principle a user must register and log in to be identified
+
+ */
+
+const PREFIX = "UserAccount" + ".";
+
+  
+
+/**
+
+ * Generic type for User identifiers, treated as opaque IDs.
+
+ */
+
+type User = ID;
+
+  
+
+/**
+
+ * @state
+
+ * a set of Users with
+
+ *   an email String
+
+ *   a passwordHash String
+
+ *   a displayName String
+
+ */
+
+interface UserDoc {
+
+  _id: User;
+
+  email: string;
+
+  passwordHash: string;
+
+  displayName: string;
+
+}
+
+  
+
+export default class UserAccountConcept {
+
+  private users: Collection<UserDoc>;
+
+  
+
+  constructor(private readonly db: Db) {
+
+    this.users = this.db.collection(PREFIX + "users");
+
+  }
+
+  
+
+  /**
+
+   * @action register
+
+   * @requires email is not already in use
+
+   * @effects creates a new user with the provided details and a hashed password
+
+   * @param {Object} args
+
+   * @param {string} args.email - The unique email address for the user.
+
+   * @param {string} args.password - The plain-text password for the user.
+
+   * @param {string} args.displayName - The display name for the user.
+
+   * @returns {Promise<{ user: User } | { error: string }>} The ID of the new user or an error message.
+
+   */
+
+  async register(
+
+    { email, password, displayName }: {
+
+      email: string;
+
+      password: string;
+
+      displayName: string;
+
+    },
+
+  ): Promise<{ user: User } | { error: string }> {
+
+    const existingUser = await this.users.findOne({ email });
+
+    if (existingUser) {
+
+      return { error: "Email already in use." };
+
+    }
+
+  
+
+    const passwordHash = await bcrypt.hash(password); // Hash password
+
+    const newUser: UserDoc = {
+
+      _id: freshID(),
+
+      email,
+
+      passwordHash,
+
+      displayName,
+
+    };
+
+  
+
+    await this.users.insertOne(newUser);
+
+    return { user: newUser._id };
+
+  }
+
+  
+
+  /**
+
+   * @action login
+
+   * @effects authenticates the user if the email and password match.
+
+   *   (A separate Session concept would typically create a session after successful login)
+
+   * @param {Object} args
+
+   * @param {string} args.email - The user's email address.
+
+   * @param {string} args.password - The user's plain-text password.
+
+   * @returns {Promise<{ user: User } | { error: string }>} The ID of the authenticated user or an error message.
+
+   */
+
+  async login(
+
+    { email, password }: { email: string; password: string },
+
+  ): Promise<{ user: User } | { error: string }> {
+
+    const user = await this.users.findOne({ email });
+
+    if (!user) {
+
+      return { error: "Invalid credentials." };
+
+    }
+
+  
+
+    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+
+    if (!passwordMatches) {
+
+      return { error: "Invalid credentials." };
+
+    }
+
+  
+
+    return { user: user._id };
+
+  }
+
+  
+
+  /**
+
+   * @action updateProfile
+
+   * @effects changes the user's displayName
+
+   * @param {Object} args
+
+   * @param {User} args.user - The ID of the user whose profile is to be updated.
+
+   * @param {string} args.newDisplayName - The new display name for the user.
+
+   * @returns {Promise<Empty | { error: string }>} An empty object on success or an error message.
+
+   */
+
+  async updateProfile(
+
+    { user, newDisplayName }: { user: User; newDisplayName: string },
+
+  ): Promise<Empty | { error: string }> {
+
+    const result = await this.users.updateOne(
+
+      { _id: user },
+
+      { $set: { displayName: newDisplayName } },
+
+    );
+
+  
+
+    if (result.matchedCount === 0) {
+
+      return { error: "User not found." };
+
+    }
+
+  
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * @action deleteAccount
+
+   * @effects removes the user and all their associated data from this concept's state.
+
+   *   (Any other concepts relying on this user ID would need syncs to handle cascade deletions.)
+
+   * @param {Object} args
+
+   * @param {User} args.user - The ID of the user to be deleted.
+
+   * @returns {Promise<Empty | { error: string }>} An empty object on success or an error message.
+
+   */
+
+  async deleteAccount(
+
+    { user }: { user: User },
+
+  ): Promise<Empty | { error: string }> {
+
+    const result = await this.users.deleteOne({ _id: user });
+
+  
+
+    if (result.deletedCount === 0) {
+
+      return { error: "User not found." };
+
+    }
+
+  
+
+    return {};
+
+  }
+
+  
+
+  /**
+
+   * @query _getUserProfile
+
+   * @effects returns the display name and email of a user.
+
+   * @param {Object} args
+
+   * @param {User} args.user - The ID of the user.
+
+   * @returns {Promise<{ displayName: string; email: string }[]>} The user's public profile data in an array, or an empty array if not found.
+
+   */
+
+  async _getUserProfile(
+
+    { user }: { user: User },
+
+  ): Promise<{ displayName: string; email: string }[]> {
+
+    const userDoc = await this.users.findOne({ _id: user });
+
+    if (!userDoc) {
+
+      return [];
+
+    }
+
+    return [{
+
+      displayName: userDoc.displayName,
+
+      email: userDoc.email,
+
+    }];
+
+  }
+
+  
+
+  /**
+
+   * @query _findUserByEmail
+
+   * @effects returns the user ID if an email exists.
+
+   * @param {Object} args
+
+   * @param {string} args.email - The email to search for.
+
+   * @returns {Promise<User | null>} The user ID or null if not found.
+
+   */
+
+  async _findUserByEmail(
+
+    { email }: { email: string },
+
+  ): Promise<User | null> {
+
+    const userDoc = await this.users.findOne({ email });
+
+    return userDoc ? userDoc._id : null;
+
+  }
+
+}
+```
+
+
+
+
+#### RequestingConcept:
+```typescript
+import { Hono } from "jsr:@hono/hono";
+
+import { cors } from "jsr:@hono/hono/cors";
+
+import { Collection, Db } from "npm:mongodb";
+
+import { freshID } from "@utils/database.ts";
+
+import { ID } from "@utils/types.ts";
+
+import { exclusions, inclusions } from "./passthrough.ts";
+
+import "jsr:@std/dotenv/load";
+
+  
+
+/**
+
+ * # Requesting concept configuration
+
+ * The following environment variables are available:
+
+ *
+
+ * - PORT: the port to the server binds, default 10000
+
+ * - REQUESTING_BASE_URL: the base URL prefix for api requests, default "/api"
+
+ * - REQUESTING_TIMEOUT: the timeout for requests, default 10000ms
+
+ * - REQUESTING_SAVE_RESPONSES: whether to persist responses or not, default true
+
+ */
+
+const PORT = parseInt(Deno.env.get("PORT") ?? "8000", 10);
+
+const REQUESTING_BASE_URL = Deno.env.get("REQUESTING_BASE_URL") ?? "/api";
+
+const REQUESTING_TIMEOUT = parseInt(
+
+  Deno.env.get("REQUESTING_TIMEOUT") ?? "10000",
+
+  10,
+
+);
+
+  
+
+// TODO: make sure you configure this environment variable for proper CORS configuration
+
+const REQUESTING_ALLOWED_DOMAIN = Deno.env.get("REQUESTING_ALLOWED_DOMAIN") ??
+
+  "*";
+
+  
+
+// Choose whether or not to persist responses
+
+const REQUESTING_SAVE_RESPONSES = Deno.env.get("REQUESTING_SAVE_RESPONSES") ??
+
+  true;
+
+  
+
+const PREFIX = "Requesting" + ".";
+
+  
+
+// --- Type Definitions ---
+
+type Request = ID;
+
+  
+
+/**
+
+ * a set of Requests with
+
+ *   an input unknown
+
+ *   an optional response unknown
+
+ */
+
+interface RequestDoc {
+
+  _id: Request;
+
+  input: { path: string; [key: string]: unknown };
+
+  response?: unknown;
+
+  createdAt: Date;
+
+}
+
+  
+
+/**
+
+ * Represents an in-flight request waiting for a response.
+
+ * This state is not persisted and lives only in memory.
+
+ */
+
+interface PendingRequest {
+
+  promise: Promise<unknown>;
+
+  resolve: (value: unknown) => void;
+
+  reject: (reason?: unknown) => void;
+
+}
+
+  
+
+/**
+
+ * The Requesting concept encapsulates an API server, modeling incoming
+
+ * requests and outgoing responses as concept actions.
+
+ */
+
+export default class RequestingConcept {
+
+  private readonly requests: Collection<RequestDoc>;
+
+  private readonly pending: Map<Request, PendingRequest> = new Map();
+
+  private readonly timeout: number;
+
+  
+
+  constructor(private readonly db: Db) {
+
+    this.requests = this.db.collection(PREFIX + "requests");
+
+    this.timeout = REQUESTING_TIMEOUT;
+
+    console.log(
+
+      `\nRequesting concept initialized with a timeout of ${this.timeout}ms.`,
+
+    );
+
+  }
+
+  
+
+  /**
+
+   * request (path: String, ...): (request: Request)
+
+   * System action triggered by an external HTTP request.
+
+   *
+
+   * **requires** true
+
+   *
+
+   * **effects** creates a new Request `r`; sets the input of `r` to be the path and all other input parameters; returns `r` as `request`
+
+   */
+
+  async request(
+
+    inputs: { path: string; [key: string]: unknown },
+
+  ): Promise<{ request: Request }> {
+
+    const requestId = freshID() as Request;
+
+    const requestDoc: RequestDoc = {
+
+      _id: requestId,
+
+      input: inputs,
+
+      createdAt: new Date(),
+
+    };
+
+  
+
+    // Persist the request for logging/auditing purposes.
+
+    await this.requests.insertOne(requestDoc);
+
+  
+
+    // Create an in-memory pending request to manage the async response.
+
+    let resolve!: (value: unknown) => void;
+
+    let reject!: (reason?: unknown) => void;
+
+    const promise = new Promise<unknown>((res, rej) => {
+
+      resolve = res;
+
+      reject = rej;
+
+    });
+
+  
+
+    this.pending.set(requestId, { promise, resolve, reject });
+
+  
+
+    return { request: requestId };
+
+  }
+
+  
+
+  /**
+
+   * respond (request: Request, [key: string]: unknown)
+
+   *
+
+   * **requires** a Request with the given `request` id exists and has no response yet
+
+   *
+
+   * **effects** sets the response of the given Request to the provided key-value pairs.
+
+   */
+
+  async respond(
+
+    { request, ...response }: { request: Request; [key: string]: unknown },
+
+  ): Promise<{ request: string }> {
+
+    const pendingRequest = this.pending.get(request);
+
+    if (pendingRequest) {
+
+      // Resolve the promise for any waiting `_awaitResponse` call.
+
+      pendingRequest.resolve(response);
+
+    }
+
+  
+
+    // Update the persisted request document with the response.
+
+    if (REQUESTING_SAVE_RESPONSES) {
+
+      await this.requests.updateOne({ _id: request }, { $set: { response } });
+
+    }
+
+  
+
+    return { request };
+
+  }
+
+  
+
+  /**
+
+   * _awaitResponse (request: Request): (response: unknown)
+
+   *
+
+   * **effects** returns the response associated with the given request, waiting if necessary up to a configured timeout.
+
+   */
+
+  async _awaitResponse(
+
+    { request }: { request: Request },
+
+  ): Promise<{ response: unknown }[]> {
+
+    const pendingRequest = this.pending.get(request);
+
+  
+
+    if (!pendingRequest) {
+
+      // The request might have been processed already or never existed.
+
+      // We could check the database for a persisted response here if needed.
+
+      throw new Error(
+
+        `Request ${request} is not pending or does not exist: it may have timed-out.`,
+
+      );
+
+    }
+
+  
+
+    let timeoutId: number;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+
+      timeoutId = setTimeout(
+
+        () =>
+
+          reject(
+
+            new Error(`Request ${request} timed out after ${this.timeout}ms`),
+
+          ),
+
+        this.timeout,
+
+      );
+
+    });
+
+  
+
+    try {
+
+      // Race the actual response promise against the timeout.
+
+      const response = await Promise.race([
+
+        pendingRequest.promise,
+
+        timeoutPromise,
+
+      ]);
+
+      return [{ response }];
+
+    } finally {
+
+      // Clean up regardless of outcome.
+
+      clearTimeout(timeoutId!);
+
+      this.pending.delete(request);
+
+    }
+
+  }
+
+}
+
+  
+
+/**
+
+ * Starts the Hono web server that listens for incoming requests and pipes them
+
+ * into the Requesting concept instance. Additionally, it allows passthrough
+
+ * requests to concept actions by default. These should be
+
+ * @param concepts The complete instantiated concepts import from "@concepts"
+
+ */
+
+export function startRequestingServer(
+
+  // deno-lint-ignore no-explicit-any
+
+  concepts: Record<string, any>,
+
+) {
+
+  // deno-lint-ignore no-unused-vars
+
+  const { Requesting, client, db, Engine, ...instances } = concepts;
+
+  if (!(Requesting instanceof RequestingConcept)) {
+
+    throw new Error("Requesting concept missing or broken.");
+
+  }
+
+  const app = new Hono();
+
+  app.use(
+
+    "/*",
+
+    cors({
+
+      origin: REQUESTING_ALLOWED_DOMAIN,
+
+    }),
+
+  );
+
+  
+
+  /**
+
+   * PASSTHROUGH ROUTES
+
+   *
+
+   * These routes register against every concept action and query.
+
+   * While convenient, you should confirm that they are either intentional
+
+   * inclusions and specify a reason, or if they should be excluded and
+
+   * handled by Requesting instead.
+
+   */
+
+  
+
+  console.log("\nRegistering concept passthrough routes.");
+
+  let unverified = false;
+
+  for (const [conceptName, concept] of Object.entries(instances)) {
+
+    const methods = Object.getOwnPropertyNames(
+
+      Object.getPrototypeOf(concept),
+
+    )
+
+      .filter((name) =>
+
+        name !== "constructor" && typeof concept[name] === "function"
+
+      );
+
+    for (const method of methods) {
+
+      const route = `${REQUESTING_BASE_URL}/${conceptName}/${method}`;
+
+      if (exclusions.includes(route)) continue;
+
+      const included = route in inclusions;
+
+      if (!included) unverified = true;
+
+      const msg = included
+
+        ? `  -> ${route}`
+
+        : `WARNING - UNVERIFIED ROUTE: ${route}`;
+
+  
+
+      app.post(route, async (c) => {
+
+        try {
+
+          const body = await c.req.json().catch(() => ({})); // Handle empty body
+
+          const result = await concept[method](body);
+
+          return c.json(result);
+
+        } catch (e) {
+
+          console.error(`Error in ${conceptName}.${method}:`, e);
+
+          return c.json({ error: "An internal server error occurred." }, 500);
+
+        }
+
+      });
+
+      console.log(msg);
+
+    }
+
+  }
+
+  const passthroughFile = "./src/concepts/Requesting/passthrough.ts";
+
+  if (unverified) {
+
+    console.log(`FIX: Please verify routes in: ${passthroughFile}`);
+
+  }
+
+  
+
+  /**
+
+   * REQUESTING ROUTES
+
+   *
+
+   * Captures all POST routes under the base URL.
+
+   * The specific action path is extracted from the URL.
+
+   */
+
+  
+
+  const routePath = `${REQUESTING_BASE_URL}/*`;
+
+  app.post(routePath, async (c) => {
+
+    try {
+
+      const body = await c.req.json();
+
+      if (typeof body !== "object" || body === null) {
+
+        return c.json(
+
+          { error: "Invalid request body. Must be a JSON object." },
+
+          400,
+
+        );
+
+      }
+
+  
+
+      // Extract the specific action path from the request URL.
+
+      // e.g., if base is /api and request is /api/users/create, path is /users/create
+
+      const actionPath = c.req.path.substring(REQUESTING_BASE_URL.length);
+
+  
+
+      // Combine the path from the URL with the JSON body to form the action's input.
+
+      const inputs = {
+
+        ...body,
+
+        path: actionPath,
+
+      };
+
+  
+
+      console.log(`[Requesting] Received request for path: ${inputs.path}`);
+
+  
+
+      // 1. Trigger the 'request' action.
+
+      const { request } = await Requesting.request(inputs);
+
+  
+
+      // 2. Await the response via the query. This is where the server waits for
+
+      //    synchronizations to trigger the 'respond' action.
+
+      const responseArray = await Requesting._awaitResponse({ request });
+
+  
+
+      // 3. Send the response back to the client.
+
+      const { response } = responseArray[0];
+
+      return c.json(response);
+
+    } catch (e) {
+
+      if (e instanceof Error) {
+
+        console.error(`[Requesting] Error processing request:`, e.message);
+
+        if (e.message.includes("timed out")) {
+
+          return c.json({ error: "Request timed out." }, 504); // Gateway Timeout
+
+        }
+
+        return c.json({ error: "An internal server error occurred." }, 500);
+
+      } else {
+
+        return c.json({ error: "unknown error occurred." }, 418);
+
+      }
+
+    }
+
+  });
+
+  
+
+  console.log(
+
+    `\n🚀 Requesting server listening for POST requests at base path of ${routePath}`,
+
+  );
+
+  
+
+  Deno.serve({ port: PORT }, app.fetch);
+
+}
+```
+
+
+# implement: syncs for authentication. 
 
 # response:
 
-Of course. That's an excellent design question. Distinguishing the source of an event is crucial for determining its behavior (e.g., can it be edited?).
-
-Here is a revised `Schedule` concept that incorporates that distinction, following the modeling format you're using.
-
-***
-
-`
-concept Schedule
-purpose to organize and display a user's time-based commitments from both manual entries and external sources
-principle all items, regardless of source, are presented in a unified chronological view. Items from external sources are read-only.
-
-state
-a set of ScheduleItems with
-a title String
-a startTime DateTime
-an endTime DateTime
-an origin: (NATIVE, EXTERNAL)
-an externalCalendarId String? # optional: identifies the source calendar if origin is EXTERNAL
-an externalEventId String? # optional: the unique ID of the event in the source calendar
-a isReadOnly Boolean # true if origin is EXTERNAL
-
-actions
-createTask (title: String, startTime: DateTime, endTime: DateTime)
-effect creates a new ScheduleItem with origin set to NATIVE and isReadOnly set to false
-
-updateTask (item: ScheduleItem, newTitle: String, newStartTime: DateTime, newEndTime: DateTime)
-requires item.isReadOnly is false
-effect modifies the properties of a NATIVE ScheduleItem
-
-deleteTask (item: ScheduleItem)
-requires item.isReadOnly is false
-effect removes a NATIVE ScheduleItem
-
-syncExternalCalendar (user: User, calendarId: String, events: list)
-effect for each event from the external source, it creates or updates a corresponding ScheduleItem.
-  - sets origin to EXTERNAL
-  - sets isReadOnly to true
-  - populates externalCalendarId and externalEventId
-  - removes any EXTERNAL items linked to this calendarId that are no longer in the events list
-`
-
-### Rationale for the Changes:
-
-1.  **`origin` Field:** The core of the solution is the new `origin` field on a `ScheduleItem`. This is a simple but powerful enumeration (`NATIVE` vs. `EXTERNAL`) that clearly flags where the data came from.
-2.  **`isReadOnly` Flag:** This makes the core principle ("Items from external sources are read-only") explicit in the data model. By checking this flag in your actions, you can easily prevent users from accidentally trying to edit or delete something that is managed by an external service like Google Calendar.
-3.  **External IDs:** The `externalCalendarId` and `externalEventId` are crucial for the sync process. They create a stable link between your system's `ScheduleItem` and the original event on the external platform, allowing you to find the right item to update during a re-sync.
-4.  **Distinct Actions:**
-    *   `createTask`, `updateTask`, and `deleteTask` are now clearly for user-generated, *native* items. Their `requires` clauses enforce the read-only rule.
-    *   A new system-level action, `syncExternalCalendar`, is introduced. This more accurately models how external data gets into the system—not by a user manually creating an "external event," but by an automated synchronization process.
-
-
-
-# prompt: how about having a function for deleting all busy slots vs deleting them by "origin". I feel like that might be useful if you wanna sync your app with an external one. Is there any reason to have the delete all?
-
-
-# response:
-
-That's another great question that gets to the heart of data lifecycle management. You're thinking about how users will manage their data sources, which is critical.
-
-You've hit on a key point: a general "delete all" action is often less useful and more dangerous than the targeted "delete by origin" approach.
-
-Let's break down the reasoning.
-
-### Comparison of the Two Approaches
-
-| Approach          | **Delete by "Origin"**                                                                                                                                            | **Delete All Busy Slots**                                                                                                                                     |
-| :---------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **User Intent**   | "I want to disconnect my Google Calendar from this app."                                                                                                          | "I want to wipe my entire schedule clean."                                                                                                                    |
-| **Precision**     | **High.** It only removes data from a specific, known source, leaving the user's manually-entered data untouched.                                                 | **Low.** It's a "blunt instrument" that erases everything, including potentially valuable native tasks the user created.                                      |
-| **Safety**        | **High.** It's very difficult for a user to accidentally delete data they wanted to keep. The scope is limited and predictable.                                   | **Low.** This is a highly destructive action. A single accidental click could cause significant, irreversible data loss and user frustration.                 |
-| **Sync Use Case** | **Essential.** This is the *exact* function needed when a user revokes access or you want to "refresh" a single calendar. It's a core part of the sync lifecycle. | **Not a sync function.** This is more of a "reset account" or "nuke data" feature. It doesn't help with the ongoing management of a specific external source. |
-
-### Conclusion and Recommendation
-
-For the core functionality of syncing, a **"delete by origin" action is superior and necessary.** A "delete all" function is more of an administrative, high-risk tool that serves a completely different, and much less common, purpose.
-
-There is very little reason to have a "delete all" function *as part of the sync logic*. However, you might have a "Clear All Schedule Data" button hidden deep in the app's settings page, behind several confirmation dialogs, for users who truly want to start over.
-
-Let's model the more precise and useful action. We can call it `disconnectExternalCalendar`.
-
-***
-
-Here is the revised `Schedule` concept with this new action.
-
-\`
-concept Schedule
-purpose to organize and display a user's time-based commitments from both manual entries and external sources
-principle all items, regardless of source, are presented in a unified chronological view. Items from external sources are read-only.
-
-state
-a set of ScheduleItems with
-a title String
-a startTime DateTime
-an endTime DateTime
-an origin: (NATIVE, EXTERNAL)
-an externalCalendarId String? # optional: identifies the source calendar if origin is EXTERNAL
-an externalEventId String? # optional: the unique ID of the event in the source calendar
-a isReadOnly Boolean # true if origin is EXTERNAL
-
-actions
-# Actions for Native Items
-createTask (title: String, startTime: DateTime, endTime: DateTime)
-effect creates a new ScheduleItem with origin set to NATIVE and isReadOnly set to false
-
-updateTask (item: ScheduleItem, newTitle: String, newStartTime: DateTime, newEndTime: DateTime)
-requires item.isReadOnly is false
-effect modifies the properties of a NATIVE ScheduleItem
-
-deleteTask (item: ScheduleItem)
-requires item.isReadOnly is false
-effect removes a NATIVE ScheduleItem
-
-# Actions for External Syncing
-syncExternalCalendar (user: User, calendarId: String, events: list)
-effect for each event from the external source, it creates or updates a corresponding ScheduleItem.
-* sets origin to EXTERNAL
-* sets isReadOnly to true
-* populates externalCalendarId and externalEventId
-* removes any EXTERNAL items linked to this calendarId that are no longer in the events list
-
-**disconnectExternalCalendar (user: User, calendarId: String)**
-**effect removes all ScheduleItems where origin is EXTERNAL and externalCalendarId matches the given ID.**
-**# This cleanly removes all data from a single source without touching native tasks.**
-\`
-
-
-
-# prompt: okay, lets change the concept:
-
-
-concept Schedule [User]
-  purpose to represent a user's non-negotiable, externally-scheduled commitments
-  principle the schedule is a read-only reflection of a user's external calendar
-  state
-    a set of BusySlots with
-      an owner User
-      a startTime DateTime
-      a endTime DateTime
-  actions
-    syncCalendar (user: User, externalEvents: set of Events)
-      effect replaces the user's busy slots with a new set based on their external calendar
-    deleteAllForUser (user: User)
-      effect removes all busy slots for the user
-    blockTime (user: User, startTime: DateTime, endTime: DateTime)
-      effect creates a new BusySlot for the user to represent non-working hours or a manual block
-    getSlots (user: User): (slots: set of BusySlots)
-      effect returns all busy slots for the user
-
-
-i feel like maybe adding updateSlot or smth might be useful and ofc changing the sync action
-
-
-
-
-# response:
-
-Of course. This is an excellent refinement. You've pivoted the concept from a general-purpose schedule to a more specific "availability layer," which is a very common and useful pattern.
-
-You've immediately spotted the central challenge in your new definition: the `blockTime` action conflicts with the `principle` of the schedule being a pure "read-only reflection." If a user can manually block time, that's no longer a reflection—it's a hybrid model.
-
-You're right on the money: if we allow `blockTime`, we absolutely need actions like `updateSlot` and `deleteSlot` to manage those manual entries. And critically, we need to make the `syncCalendar` action "smarter" so it doesn't wipe out the user's manual blocks.
-
-This brings us back to a similar solution as before: we need to distinguish the *origin* of a `BusySlot`.
-
-Here is a revised concept that incorporates your new direction and resolves the conflict.
-
-***
-
-`
-concept Schedule [User]
-purpose to represent a user's availability by combining non-negotiable, externally-scheduled commitments with manual time blocks
-principle The schedule is primarily a read-only reflection of a user's external calendar, but allows for manual additions which are preserved during syncs.
-
-state
-a set of BusySlots with
-an owner User
-a startTime DateTime
-a endTime DateTime
-an origin: (EXTERNAL, MANUAL) # Distinguishes calendar events from user-created blocks
-
-actions
-
-# Actions for Manual Blocks
-# These actions only operate on slots the user has created themselves.
-
-blockTime (user: User, startTime: DateTime, endTime: DateTime)
-effect creates a new BusySlot for the user with origin set to MANUAL
-
-updateSlot (slot: BusySlot, newStartTime: DateTime, newEndTime: DateTime)
-requires slot.origin is MANUAL
-effect modifies the start and end time of a manually created BusySlot
-
-deleteSlot (slot: BusySlot)
-requires slot.origin is MANUAL
-effect removes a manually created BusySlot
-
-# Actions for External Syncing and Data Management
-
-syncCalendar (user: User, externalEvents: set of Events)
-effect updates the user's schedule to match their external calendar without affecting manual blocks.
-* First, removes all of the user's BusySlots where origin is EXTERNAL.
-* Then, for each event in externalEvents, creates a new BusySlot with origin set to EXTERNAL.
-
-deleteAllForUser (user: User)
-effect removes all busy slots (both MANUAL and EXTERNAL) for the user. # A full reset
-
-getSlots (user: User): (slots: set of BusySlots)
-effect returns all busy slots for the user, regardless of origin
-`
-
-### Rationale for the Changes:
-
-1.  **Re-introducing `origin`:** The core problem is distinguishing what the system can automatically manage (from the calendar) versus what the user manages directly. The `origin: (EXTERNAL, MANUAL)` field on each `BusySlot` solves this perfectly.
-2.  **Smarter `syncCalendar`:** Your original `syncCalendar` action was "destructive and replaces everything." The new version is much safer and more aligned with user expectations. It now specifically targets only the `EXTERNAL` slots for replacement, leaving `MANUAL` ones untouched.
-3.  **Scoped Actions for Manual Slots:** We now have a full set of actions (`blockTime`, `updateSlot`, `deleteSlot`) for managing manual blocks. The `requires slot.origin is MANUAL` clause is the key safety mechanism that prevents the user from trying to edit an event that actually lives on their Google Calendar.
-4.  **Clarified Principles:** The `purpose` and `principle` have been updated to reflect this new hybrid nature. It's no longer a *pure* read-only reflection; it's a composite view of availability, which is a much more powerful and flexible concept.
-5.  **`deleteAllForUser` Retained:** This action still has a purpose as a "full reset" for a user's schedule, which can be a useful administrative function. The comment clarifies that it is a destructive action affecting all data types.
-
-
-# prompt: should I add busy slot description
-
-# response:
-
-That's a fantastic suggestion. Thinking about the level of detail needed in your data model is key.
-
-Adding a description is an excellent idea because it provides critical **context**. A busy slot is much more useful when you know *why* it's busy.
-
-Here's a breakdown of why this is a strong addition and how it would look.
-
-### The Case for Adding a Description
-
-1.  **User Experience:** For the user managing their own manual blocks, "Lunch" is more informative than just a blocked-out hour. It helps them remember and plan.
-2.  **Context from External Sources:** For synced events, the event's title (e.g., "Quarterly Review," "Dentist Appointment") is the most important piece of information. Simply blocking the time without that title loses almost all the value of the sync.
-3.  **Future-Proofing:** It allows for more advanced features later. For example, you could analyze the descriptions to automatically categorize a user's time.
-4.  **Debugging:** When you look at the raw data, having a description makes it immediately obvious what each `BusySlot` represents, which is invaluable for development and support.
-
-The only potential "con" is privacy, but that's handled at the application layer. The rule should be: "The system stores the description for the user's own reference, but only exposes 'busy'/'free' status to others."
-
-So, yes, you should absolutely add a description. Let's integrate it into the concept.
-
-***
-
-Here is the revised concept that includes the `description` field and updates the relevant actions.
-
-\`
-concept Schedule \[User]
-purpose to represent a user's availability by combining non-negotiable, externally-scheduled commitments with manual time blocks
-principle The schedule is primarily a read-only reflection of a user's external calendar, but allows for manual additions which are preserved during syncs.
-
-state
-a set of BusySlots with
-an owner User
-a startTime DateTime
-a endTime DateTime
-**a description String # The title of the event or reason for the block**
-an origin: (EXTERNAL, MANUAL) # Distinguishes calendar events from user-created blocks
-
-actions
-
-# Actions for Manual Blocks
-
-# These actions only operate on slots the user has created themselves.
-
-blockTime (user: User, startTime: DateTime, endTime: DateTime, **description: String**)
-effect creates a new BusySlot for the user with the given details and sets origin to MANUAL
-
-updateSlot (slot: BusySlot, newStartTime: DateTime, newEndTime: DateTime, **newDescription: String**)
-requires slot.origin is MANUAL
-effect modifies the properties of a manually created BusySlot
-
-deleteSlot (slot: BusySlot)
-requires slot.origin is MANUAL
-effect removes a manually created BusySlot
-
-# Actions for External Syncing and Data Management
-
-syncCalendar (user: User, externalEvents: set of Events)
-effect updates the user's schedule to match their external calendar without affecting manual blocks.
-
-* First, removes all of the user's BusySlots where origin is EXTERNAL.
-* Then, for each event in externalEvents, creates a new BusySlot with origin set to EXTERNAL, **populating the description from the external event's title.**
-
-deleteAllForUser (user: User)
-effect removes all busy slots (both MANUAL and EXTERNAL) for the user. # A full reset
-
-getSlots (user: User): (slots: set of BusySlots)
-effect returns all busy slots for the user, regardless of origin
-\`
-
-### Summary of Changes:
-
-1.  **State:** The `BusySlot` definition now includes a `description` field. I've renamed it from "title" to "description" as it's a more general term that works for both formal events and informal blocks.
-2.  **`blockTime`:** The action now requires a `description` when a user creates a manual block.
-3.  **`updateSlot`:** This action now allows the user to change the `description` of a manual block.
-4.  **`syncCalendar`:** The `effect` explicitly mentions that the `description` is populated from the external event's data (e.g., its title or summary), which formalizes how that data flows into your system.
-
-
-# prompt: can you summarize all the changes and the reasoning behind them for the Schedule concept:
-
-from this:
-
-concept Schedule [User]
-  purpose to represent a user's non-negotiable, externally-scheduled commitments
-  principle the schedule is a read-only reflection of a user's external calendar
-  state
-    a set of BusySlots with
-      an owner User
-      a startTime DateTime
-      a endTime DateTime
-  actions
-    syncCalendar (user: User, externalEvents: set of Events)
-      effect replaces the user's busy slots with a new set based on their external calendar
-    deleteAllForUser (user: User)
-      effect removes all busy slots for the user
-    blockTime (user: User, startTime: DateTime, endTime: DateTime)
-      effect creates a new BusySlot for the user to represent non-working hours or a manual block
-    getSlots (user: User): (slots: set of BusySlots)
-      effect returns all busy slots for the user
-
-
-
-to the newer version
-
-
-
-
-
-# response:
-
-Of course. Here is a summary of the evolution of the `Schedule` concept, detailing each change and the reasoning behind it.
-
-### High-Level Summary
-
-The concept evolved from a simple but flawed "read-only reflection" of an external calendar into a more robust and practical **hybrid availability model**. The initial version had a fundamental conflict: its principles stated it was read-only, but it included an action to manually create data (`blockTime`), and its sync action was destructive.
-
-The final version resolves this conflict by explicitly acknowledging and managing two distinct sources of data—**external** and **manual**—making the system safer, more flexible, and more aligned with user expectations.
-
----
-
-### Breakdown of Changes and Reasoning
-
-Here are the specific changes, grouped by the problem they solved.
-
-#### 1. Change: Distinguishing Data Sources with an `origin` Field
-
-*   **Initial State:** All `BusySlots` were treated the same, regardless of where they came from.
-*   **Final State:** A new field, `origin: (EXTERNAL, MANUAL)`, was added to each `BusySlot`.
-*   **Reasoning:**
-    *   **Resolves the Core Conflict:** This was the most critical change. It solves the contradiction between the "read-only" principle and the `blockTime` action. By labeling each slot's origin, the system can apply different rules to different types of data.
-    *   **Enables Granular Control:** It provides the necessary foundation for all other improvements, such as making syncs non-destructive and allowing safe editing of manual blocks.
-
-#### 2. Change: Making the Sync Action Non-Destructive
-
-*   **Initial Action (`syncCalendar`):** "replaces the user's busy slots with a new set." This would have deleted any manually created blocks.
-*   **Final Action (`syncCalendar`):** "First, removes all of the user's BusySlots where origin is EXTERNAL. Then, for each event... creates a new BusySlot with origin set to EXTERNAL."
-*   **Reasoning:**
-    *   **Preserves User Data:** The primary goal was to prevent the sync process from wiping out the user's manually entered data. Users expect a sync to add and update calendar data, not to erase their personal blocks.
-    *   **Correctly Manages Lifecycle:** This models the data lifecycle correctly. Data from an external source is volatile and managed by the sync process, while manual data is persistent until explicitly changed by the user.
-
-#### 3. Change: Adding Full Management for Manual Blocks
-
-*   **Initial Actions:** Only included `blockTime`. There was no way to edit or remove a manual block once it was created.
-*   **Final Actions:** Added `updateSlot` and `deleteSlot`, both of which include the clause `requires slot.origin is MANUAL`.
-*   **Reasoning:**
-    *   **Completes the Feature:** If a user can create something, they must be able to edit and delete it. This provides a complete set of CRUD (Create, Read, Update, Delete) operations for manual data.
-    *   **Enforces Read-Only Principle:** The `requires` clause is a critical safety mechanism. It prevents the user from accidentally trying to modify a synced event from their external calendar, thus upholding the "read-only" principle for `EXTERNAL` data.
-
-#### 4. Change: Adding Context with a `description` Field
-
-*   **Initial State:** A `BusySlot` was just a time range (`startTime`, `endTime`), providing no context for *why* the time was busy.
-*   **Final State:** A `description: String` field was added to `BusySlot`.
-*   **Reasoning:**
-    *   **Improves Usefulness:** Knowing a slot is blocked for "Quarterly Review" vs. "Lunch" is essential context for the user. It transforms the feature from a simple "busy/free" indicator into a meaningful schedule.
-    *   **Captures External Data:** It provides a place to store the title from the external calendar event, preserving the most important piece of information from the sync.
-
-### Summary Table: Before vs. After
-
-| Aspect | Initial Version (The "From") | Final Version (The "To") | Reason for Change |
-| :--- | :--- | :--- | :--- |
-| **Core Principle** | A "read-only reflection" of an external calendar (conflicted with its actions). | A hybrid of read-only external events and editable manual blocks. | To resolve the internal contradiction and create a more practical and powerful model. |
-| **Data Model (`BusySlot`)** | `owner`, `startTime`, `endTime` | `owner`, `startTime`, `endTime`, **`description`**, **`origin`** | To add crucial context (`description`) and to distinguish between data sources (`origin`). |
-| **Sync Behavior** | Destructive: "replaces" all slots, deleting manual entries. | Non-destructive: Only replaces slots where `origin` is `EXTERNAL`. | To protect user-created data and meet user expectations for how syncing should work. |
-| **Manual Slot Management** | Could only `blockTime`. No way to edit or delete. | Full CRUD: `blockTime`, `updateSlot`, and `deleteSlot`. | To give users full control over the data they create manually within the application. |
-| **Safety** | Low. A sync could cause data loss. No rules preventing edits of external data. | High. `requires` clauses on `update/deleteSlot` prevent editing of external events. | To build a robust system that prevents accidental data loss or invalid operations. |
-
-
-
-# prompt: be more concise and write it so that I can put it in a file that explains the concept changes
-
-
-# response:
-
-Of course. Here is a concise summary formatted for documentation, explaining the evolution of the `Schedule` concept.
-
-***
-
-### Summary of Changes to the Schedule Concept
-
-The `Schedule` concept was refined from a simple, read-only reflection of an external calendar into a more robust **hybrid availability model**. The initial version contained a logical conflict: its "read-only" principle was contradicted by an action to create manual data (`blockTime`), and its sync action was destructive to that manual data.
-
-The following changes resolve these issues, resulting in a safer, more flexible, and user-friendly design.
-
----
-
-#### 1. Added `origin` Field to Distinguish Data Sources
-
-*   **Change:** A new field, `origin: (EXTERNAL, MANUAL)`, was added to each `BusySlot`.
-*   **Reasoning:** This is the core architectural change. It distinguishes between data synced from an external calendar (`EXTERNAL`) and data created by the user within the app (`MANUAL`). This allows the system to apply different rules and behaviors based on where the data came from.
-
-#### 2. Made `syncCalendar` Action Non-Destructive
-
-*   **Change:** The `syncCalendar` action was modified to only delete and replace `BusySlots` where `origin` is `EXTERNAL`.
-*   **Reasoning:** The original "replace all" behavior was destructive, as it would have deleted any manually created blocks. The new approach preserves user-created data, aligning with the expectation that a sync should not erase manually entered information.
-
-#### 3. Introduced Full Management for Manual Blocks
-
-*   **Change:** Added `updateSlot` and `deleteSlot` actions, which can only operate on slots where `origin` is `MANUAL`.
-*   **Reasoning:** To give users full control over the data they create (Create, Read, Update, Delete). The `requires slot.origin is MANUAL` clause acts as a critical safety guardrail, preventing users from modifying events that should only be managed by the external calendar sync.
-
-#### 4. Added `description` Field for Context
-
-*   **Change:** Added a `description: String` field to the `BusySlot` state.
-*   **Reasoning:** A time block without context has limited value. This field stores the event title from an external calendar or a user-provided description for a manual block (e.g., "Lunch"). It provides essential context, making the schedule understandable and truly useful.
+Here are the implementations for the authentication synchronizations. These files should be placed in a new `src/syncs/auth/` directory.
+
+### 1. Login Synchronization
+
+This sync handles the `/api/UserAccount/login` route. It takes an email and password, attempts to log the user in, creates a session upon success, and responds with either a session token or an error.
+
+**File: `src/syncs/auth/login.sync.ts`**
+```typescript
+import { sync } from "@gateway/index.ts";
+import { Requesting, Sessioning, UserAccount } from "@concepts/index.ts";
+
+/**
+ * This sync handles the entire user login flow.
+ * 1. Listens for a POST request to `/api/UserAccount/login`.
+ * 2. Calls `UserAccount.login` to verify credentials.
+ * 3. On successful login, calls `Sessioning.create` to generate a session token.
+ * 4. Responds to the original request with the session token or an error message.
+ */
+export default sync({
+  name: "User Login",
+  when: {
+    // Trigger when a request is made to the login endpoint.
+    request: Requesting.request({
+      path: "/UserAccount/login",
+    }),
+  },
+  then: async ({ request }) => {
+    // The request body is in the `input` field of the request document.
+    const { email, password } = request.input;
+
+    if (!email || !password) {
+      await Requesting.respond({
+        request: request._id,
+        error: "Email and password are required.",
+      });
+      return;
+    }
+
+    // Attempt to authenticate the user.
+    const loginResult = await UserAccount.login({ email, password });
+
+    // The login action returns either { user: ID } or { error: string }.
+    if ("user" in loginResult) {
+      // On success, create a session for the authenticated user.
+      const { session } = await Sessioning.create({ user: loginResult.user });
+
+      // Respond with the new session ID.
+      await Requesting.respond({ request: request._id, session });
+    } else {
+      // On failure, respond with the error from the login action.
+      await Requesting.respond({
+        request: request._id,
+        error: loginResult.error,
+      });
+    }
+  },
+});
+```
+
+### 2. Logout Synchronization
+
+This sync handles the `/api/Sessioning/delete` route. It takes a session ID and deletes it, effectively logging the user out.
+
+**File: `src/syncs/auth/logout.sync.ts`**
+```typescript
+import { sync } from "@gateway/index.ts";
+import { Requesting, Sessioning } from "@concepts/index.ts";
+
+/**
+ * This sync handles user logout.
+ * 1. Listens for a POST request to `/api/Sessioning/delete`.
+ * 2. Extracts the session ID from the request body.
+ * 3. Calls `Sessioning.delete` to invalidate the session.
+ * 4. Responds with a confirmation message.
+ */
+export default sync({
+  name: "User Logout",
+  when: {
+    request: Requesting.request({
+      path: "/Sessioning/delete",
+    }),
+  },
+  then: async ({ request }) => {
+    const { session } = request.input;
+
+    if (!session) {
+      await Requesting.respond({
+        request: request._id,
+        error: "Session ID is required.",
+      });
+      return;
+    }
+
+    // Attempt to delete the session. The `delete` action handles
+    // cases where the session doesn't exist.
+    await Sessioning.delete({ session });
+
+    // Respond to the client to confirm logout.
+    await Requesting.respond({ request: request._id, status: "logged_out" });
+  },
+});
+```
+
+### 3. Authenticated Routes Synchronizations
+
+This file contains the logic for all other protected routes. It uses a helper function, `withAuth`, to first verify the provided session token and retrieve the associated user ID before proceeding to call the intended concept action.
+
+**File: `src/syncs/auth/authenticatedRoutes.sync.ts`**
+```typescript
+import { sync } from "@gateway/index.ts";
+import {
+  Focus,
+  Planner,
+  Requesting,
+  Schedule,
+  Sessioning,
+  Tasks,
+  UserAccount,
+} from "@concepts/index.ts";
+
+/**
+ * A higher-order function that wraps a sync's `then` clause with
+ * session validation logic.
+ *
+ * @param handler The original `then` function to execute upon successful authentication.
+ * @returns An async function that performs session validation and then calls the handler.
+ */
+const withAuth = (
+  handler: (args: {
+    request: any;
+    user: string;
+    params: Record<string, any>;
+  }) => Promise<void>,
+) => {
+  return async ({ request }: { request: any }) => {
+    const { session, ...params } = request.input;
+
+    if (!session) {
+      return await Requesting.respond({
+        request: request._id,
+        error: "Unauthorized: Missing session token.",
+      });
+    }
+
+    const userResult = await Sessioning._getUser({ session });
+
+    if (userResult.length === 0 || "error" in userResult[0]) {
+      const error = userResult[0]?.error ?? "Invalid session.";
+      return await Requesting.respond({
+        request: request._id,
+        error: `Unauthorized: ${error}`,
+      });
+    }
+
+    const { user } = userResult[0];
+    await handler({ request, user, params });
+  };
+};
+
+// --- Syncs for Focus Concept ---
+export const setCurrentTask = sync({
+  name: "Authenticated: Focus.setCurrentTask",
+  when: { request: Requesting.request({ path: "/Focus/setCurrentTask" }) },
+  then: withAuth(async ({ request, user, params }) => {
+    const result = await Focus.setCurrentTask({ user, ...params });
+    await Requesting.respond({ request: request._id, ...result });
+  }),
+});
+
+export const clearCurrentTask = sync({
+  name: "Authenticated: Focus.clearCurrentTask",
+  when: { request: Requesting.request({ path: "/Focus/clearCurrentTask" }) },
+  then: withAuth(async ({ request, user, params }) => {
+    const result = await Focus.clearCurrentTask({ user, ...params });
+    await Requesting.respond({ request: request._id, ...result });
+  }),
+});
+
+export const getCurrentTask = sync({
+  name: "Authenticated: Focus._getCurrentTask",
+  when: { request: Requesting.request({ path: "/Focus/getCurrentTask" }) },
+  then: withAuth(async ({ request, user }) => {
+    const result = await Focus._getCurrentTask({ user });
+    await Requesting.respond({ request: request._id, currentTask: result[0] ?? null });
+  }),
+});
+
+// --- Syncs for Planner Concept ---
+export const planDay = sync({
+  name: "Authenticated: Planner.planDay",
+  when: { request: Requesting.request({ path: "/Planner/planDay" }) },
+  then: withAuth(async ({ request, user, params }) => {
+    const result = await Planner.planDay({ user, ...params });
+    await Requesting.respond({ request: request._id, ...result });
+  }),
+});
+
+export const replan = sync({
+  name: "Authenticated: Planner.replan",
+  when: { request: Requesting.request({ path: "/Planner/replan" }) },
+  then: withAuth(async ({ request, user, params }) => {
+    const result = await Planner.replan({ user, ...params });
+    await Requesting.respond({ request: request._id, ...result });
+  }),
+});
+
+export const clearDay = sync({
+  name: "Authenticated: Planner.clearDay",
+  when: { request: Requesting.request({ path: "/Planner/clearDay" }) },
+  then: withAuth(async ({ request, user, params }) => {
+    const result = await Planner.clearDay({ user, ...params });
+    await Requesting.respond({ request: request._id, ...result });
+  }),
+});
+
+export const deleteAllForUserPlanner = sync({
+    name: "Authenticated: Planner.deleteAllForUser",
+    when: { request: Requesting.request({ path: "/Planner/deleteAllForUser" }) },
+    then: withAuth(async ({ request, user }) => {
+        const result = await Planner.deleteAllForUser({ user });
+        await Requesting.respond({ request: request._id, ...result });
+    }),
+});
+
+export const getNextTask = sync({
+    name: "Authenticated: Planner.getNextTask",
+    when: { request: Requesting.request({ path: "/Planner/getNextTask" }) },
+    then: withAuth(async ({ request, user, params }) => {
+        const result = await Planner.getNextTask({ user, ...params });
+        await Requesting.respond({ request: request._id, ...result });
+    }),
+});
+
+export const getScheduledTasks = sync({
+    name: "Authenticated: Planner._getScheduledTasks",
+    when: { request: Requesting.request({ path: "/Planner/_getScheduledTasks" }) },
+    then: withAuth(async ({ request, user }) => {
+        const result = await Planner._getScheduledTasks({ user });
+        await Requesting.respond({ request: request._id, ...(result[0] ?? { tasks: [] }) });
+    }),
+});
+
+// --- Syncs for Schedule Concept ---
+export const blockTime = sync({
+  name: "Authenticated: Schedule.blockTime",
+  when: { request: Requesting.request({ path: "/Schedule/blockTime" }) },
+  then: withAuth(async ({ request, user, params }) => {
+    const result = await Schedule.blockTime({ user, ...params });
+    await Requesting.respond({ request: request._id, ...result });
+  }),
+});
+
+export const updateSlot = sync({
+  name: "Authenticated: Schedule.updateSlot",
+  when: { request: Requesting.request({ path: "/Schedule/updateSlot" }) },
+  then: withAuth(async ({ request, params }) => { // Note: `updateSlot` doesn't require user ID
+    const result = await Schedule.updateSlot({ ...params });
+    await Requesting.respond({ request: request._id, ...result });
+  }),
+});
+
+export const deleteSlot = sync({
+  name: "Authenticated: Schedule.deleteSlot",
+  when: { request: Requesting.request({ path: "/Schedule/deleteSlot" }) },
+  then: withAuth(async ({ request, params }) => { // Note: `deleteSlot` doesn't require user ID
+    const result = await Schedule.deleteSlot({ ...params });
+    await Requesting.respond({ request: request._id, ...result });
+  }),
+});
+
+export const syncCalendar = sync({
+    name: "Authenticated: Schedule.syncCalendar",
+    when: { request: Requesting.request({ path: "/Schedule/syncCalendar" }) },
+    then: withAuth(async ({ request, user, params }) => {
+        const result = await Schedule.syncCalendar({ user, ...params });
+        await Requesting.respond({ request: request._id, ...result });
+    }),
+});
+
+export const deleteAllForUserSchedule = sync({
+    name: "Authenticated: Schedule.deleteAllForUser",
+    when: { request: Requesting.request({ path: "/Schedule/deleteAllForUser" }) },
+    then: withAuth(async ({ request, user }) => {
+        const result = await Schedule.deleteAllForUser({ user });
+        await Requesting.respond({ request: request._id, ...result });
+    }),
+});
+
+export const getSlots = sync({
+    name: "Authenticated: Schedule._getSlots",
+    when: { request: Requesting.request({ path: "/Schedule/_getSlots" }) },
+    then: withAuth(async ({ request, user }) => {
+        const result = await Schedule._getSlots({ user });
+        const slots = result.map(item => item.slot);
+        await Requesting.respond({ request: request._id, slots });
+    }),
+});
+
+// --- Syncs for Tasks Concept ---
+export const createTask = sync({
+  name: "Authenticated: Tasks.createTask",
+  when: { request: Requesting.request({ path: "/Tasks/createTask" }) },
+  then: withAuth(async ({ request, user, params }) => {
+    const result = await Tasks.createTask({ owner: user, ...params });
+    await Requesting.respond({ request: request._id, ...result });
+  }),
+});
+
+export const getTasks = sync({
+  name: "Authenticated: Tasks._getTasks",
+  when: { request: Requesting.request({ path: "/Tasks/_getTasks" }) },
+  then: withAuth(async ({ request, user }) => {
+    const result = await Tasks._getTasks({ user });
+    await Requesting.respond({ request: request._id, ...(result[0] ?? { tasks: [] }) });
+  }),
+});
+
+export const updateTask = sync({
+    name: "Authenticated: Tasks.updateTask",
+    when: { request: Requesting.request({ path: "/Tasks/updateTask" }) },
+    then: withAuth(async ({ request, params }) => {
+        // Security Note: This action should ideally verify task ownership.
+        const result = await Tasks.updateTask({ ...params });
+        await Requesting.respond({ request: request._id, ...result });
+    }),
+});
+
+export const reorderTasks = sync({
+    name: "Authenticated: Tasks.reorderTasks",
+    when: { request: Requesting.request({ path: "/Tasks/reorderTasks" }) },
+    then: withAuth(async ({ request, user, params }) => {
+        const result = await Tasks.reorderTasks({ user, ...params });
+        await Requesting.respond({ request: request._id, ...result });
+    }),
+});
+
+export const markTaskComplete = sync({
+    name: "Authenticated: Tasks.markTaskComplete",
+    when: { request: Requesting.request({ path: "/Tasks/markTaskComplete" }) },
+    then: withAuth(async ({ request, params }) => {
+        const result = await Tasks.markTaskComplete({ ...params });
+        await Requesting.respond({ request: request._id, ...result });
+    }),
+});
+
+export const deleteTask = sync({
+    name: "Authenticated: Tasks.deleteTask",
+    when: { request: Requesting.request({ path: "/Tasks/deleteTask" }) },
+    then: withAuth(async ({ request, params }) => {
+        const result = await Tasks.deleteTask({ ...params });
+        await Requesting.respond({ request: request._id, ...result });
+    }),
+});
+
+export const deleteAllForUserTasks = sync({
+    name: "Authenticated: Tasks.deleteAllForUser",
+    when: { request: Requesting.request({ path: "/Tasks/deleteAllForUser" }) },
+    then: withAuth(async ({ request, user }) => {
+        const result = await Tasks.deleteAllForUser({ user });
+        await Requesting.respond({ request: request._id, ...result });
+    }),
+});
+
+export const getRemainingTasks = sync({
+    name: "Authenticated: Tasks._getRemainingTasks",
+    when: { request: Requesting.request({ path: "/Tasks/_getRemainingTasks" }) },
+    then: withAuth(async ({ request, user }) => {
+        const result = await Tasks._getRemainingTasks({ user });
+        await Requesting.respond({ request: request._id, ...(result[0] ?? { tasks: [] }) });
+    }),
+});
+
+
+// --- Syncs for UserAccount Concept ---
+export const updateProfile = sync({
+  name: "Authenticated: UserAccount.updateProfile",
+  when: { request: Requesting.request({ path: "/UserAccount/updateProfile" }) },
+  then: withAuth(async ({ request, user, params }) => {
+    const result = await UserAccount.updateProfile({ user, ...params });
+    await Requesting.respond({ request: request._id, ...result });
+  }),
+});
+
+export const deleteAccount = sync({
+    name: "Authenticated: UserAccount.deleteAccount",
+    when: { request: Requesting.request({ path: "/UserAccount/deleteAccount" }) },
+    then: withAuth(async ({ request, user }) => {
+        const result = await UserAccount.deleteAccount({ user });
+        await Requesting.respond({ request: request._id, ...result });
+    }),
+});
+
+export const getUserProfile = sync({
+    name: "Authenticated: UserAccount._getUserProfile",
+    when: { request: Requesting.request({ path: "/UserAccount/_getUserProfile" }) },
+    then: withAuth(async ({ request, user }) => {
+        const result = await UserAccount._getUserProfile({ user });
+        await Requesting.respond({ request: request._id, ...(result[0] ?? null) });
+    }),
+});
+```
+*Note: A few protected routes like `Schedule.updateSlot` and `Tasks.updateTask` do not accept a `user` ID in their signature. This is a potential security issue in the concept's design, as ownership cannot be verified. The syncs above call them as designed, but in a real-world scenario, the concept actions should be updated to enforce authorization.*

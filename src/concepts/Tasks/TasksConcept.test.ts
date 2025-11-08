@@ -17,7 +17,11 @@ function isSuccess<T>(response: unknown): response is T {
     !("error" in response);
 }
 
-Deno.test("TasksConcept", async (t) => {
+Deno.test({
+  name: "TasksConcept",
+  sanitizeResources: false, // MongoDB connection pool may not fully close
+  sanitizeOps: false,
+}, async (t) => {
   const [db, client] = await testDb();
   const tasksConcept = new TasksConcept(db);
 
@@ -76,15 +80,15 @@ Deno.test("TasksConcept", async (t) => {
       console.log(`Query: _getTasks({ user: "${userAlice}" })`);
       const allTasksResult = await tasksConcept._getTasks({ user: userAlice });
       console.log("Result:", allTasksResult);
-      assert(isSuccess<{ tasks: TaskDocument[] }>(allTasksResult));
-      assertEquals(allTasksResult.tasks.length, 3);
-      assertEquals(allTasksResult.tasks.map((t) => t._id), [
+      assert(isSuccess<{ tasks: TaskDocument[] }>(allTasksResult[0]));
+      assertEquals(allTasksResult[0].tasks.length, 3);
+      assertEquals(allTasksResult[0].tasks.map((t) => t._id), [
         task1Id,
         task2Id,
         task3Id,
       ]);
-      assertEquals(allTasksResult.tasks[0].title, "Buy milk");
-      assertEquals(allTasksResult.tasks[0].status, "TODO");
+      assertEquals(allTasksResult[0].tasks[0].title, "Buy milk");
+      assertEquals(allTasksResult[0].tasks[0].status, "TODO");
 
       // 4. Alice marks "Buy milk" as complete
       console.log(`Action: markTaskComplete({ task: "${task1Id}" })`);
@@ -100,8 +104,8 @@ Deno.test("TasksConcept", async (t) => {
         user: userAlice,
       });
       console.log("Result:", updatedTasksResult);
-      assert(isSuccess<{ tasks: TaskDocument[] }>(updatedTasksResult));
-      const completedTask = updatedTasksResult.tasks.find((t) =>
+      assert(isSuccess<{ tasks: TaskDocument[] }>(updatedTasksResult[0]));
+      const completedTask = updatedTasksResult[0].tasks.find((t) =>
         t._id === task1Id
       );
       assertNotEquals(completedTask, undefined);
@@ -113,9 +117,9 @@ Deno.test("TasksConcept", async (t) => {
         user: userAlice,
       });
       console.log("Result:", remainingTasksResult);
-      assert(isSuccess<{ tasks: TaskDocument[] }>(remainingTasksResult));
-      assertEquals(remainingTasksResult.tasks.length, 2);
-      assertEquals(remainingTasksResult.tasks.map((t) => t._id), [
+      assert(isSuccess<{ tasks: TaskDocument[] }>(remainingTasksResult[0]));
+      assertEquals(remainingTasksResult[0].tasks.length, 2);
+      assertEquals(remainingTasksResult[0].tasks.map((t) => t._id), [
         task2Id,
         task3Id,
       ]);
@@ -147,9 +151,9 @@ Deno.test("TasksConcept", async (t) => {
 
     console.log(`Query: _getTasks for Bob initially`);
     let bobTasks = await tasksConcept._getTasks({ user: userBob });
-    assert(isSuccess<{ tasks: TaskDocument[] }>(bobTasks));
-    assertEquals(bobTasks.tasks.map((t) => t._id), [t1, t2, t3]);
-    console.log("Initial order:", bobTasks.tasks.map((t) => t.title));
+    assert(isSuccess<{ tasks: TaskDocument[] }>(bobTasks[0]));
+    assertEquals(bobTasks[0].tasks.map((t) => t._id), [t1, t2, t3]);
+    console.log("Initial order:", bobTasks[0].tasks.map((t) => t.title));
 
     const newOrder = [t3, t1, t2];
     console.log(`Action: reorderTasks for Bob with new order [C, A, B]`);
@@ -161,9 +165,9 @@ Deno.test("TasksConcept", async (t) => {
     assert(!isError(reorderRes));
 
     bobTasks = await tasksConcept._getTasks({ user: userBob });
-    assert(isSuccess<{ tasks: TaskDocument[] }>(bobTasks));
-    assertEquals(bobTasks.tasks.map((t) => t._id), newOrder);
-    console.log("New order:", bobTasks.tasks.map((t) => t.title));
+    assert(isSuccess<{ tasks: TaskDocument[] }>(bobTasks[0]));
+    assertEquals(bobTasks[0].tasks.map((t) => t._id), newOrder);
+    console.log("New order:", bobTasks[0].tasks.map((t) => t.title));
 
     const newTitle = "Task C - Updated";
     const newDescription = "Task C - New Description";
@@ -179,8 +183,8 @@ Deno.test("TasksConcept", async (t) => {
     assert(!isError(updateRes));
 
     bobTasks = await tasksConcept._getTasks({ user: userBob });
-    assert(isSuccess<{ tasks: TaskDocument[] }>(bobTasks));
-    const updatedTask = bobTasks.tasks.find((t) => t._id === t3);
+    assert(isSuccess<{ tasks: TaskDocument[] }>(bobTasks[0]));
+    const updatedTask = bobTasks[0].tasks.find((t) => t._id === t3);
     assertEquals(updatedTask?.title, newTitle);
     assertEquals(updatedTask?.description, newDescription);
     assertEquals(updatedTask?.dueDate?.toISOString(), newDueDate.toISOString());
@@ -210,9 +214,9 @@ Deno.test("TasksConcept", async (t) => {
     assert(!isError(deleteRes));
 
     let userTasks = await tasksConcept._getTasks({ user: userToDelete });
-    assert(isSuccess<{ tasks: TaskDocument[] }>(userTasks));
-    assertEquals(userTasks.tasks.length, 1);
-    assertEquals(userTasks.tasks[0]._id, t2);
+    assert(isSuccess<{ tasks: TaskDocument[] }>(userTasks[0]));
+    assertEquals(userTasks[0].tasks.length, 1);
+    assertEquals(userTasks[0].tasks[0]._id, t2);
     console.log("Task D deleted successfully.");
 
     console.log(`Action: deleteAllForUser for ${userToDelete}`);
@@ -223,10 +227,10 @@ Deno.test("TasksConcept", async (t) => {
     assert(!isError(deleteAllRes));
 
     userTasks = await tasksConcept._getTasks({ user: userToDelete });
-    assert(isError(userTasks));
     assertEquals(
-      userTasks.error,
-      `No task list found for user ${userToDelete}.`,
+      userTasks.length,
+      0,
+      "After deleting all, _getTasks should return an empty array.",
     );
     console.log(`All tasks for ${userToDelete} deleted successfully.`);
   });
@@ -305,15 +309,15 @@ Deno.test("TasksConcept", async (t) => {
 
       console.log(`Query: _getTasks on empty list`);
       let davidTasks = await tasksConcept._getTasks({ user: userDavid });
-      assert(isSuccess<{ tasks: TaskDocument[] }>(davidTasks));
-      assertEquals(davidTasks.tasks.length, 0);
+      assert(isSuccess<{ tasks: TaskDocument[] }>(davidTasks[0]));
+      assertEquals(davidTasks[0].tasks.length, 0);
 
       console.log(`Query: _getRemainingTasks on empty list`);
       let davidRemaining = await tasksConcept._getRemainingTasks({
         user: userDavid,
       });
-      assert(isSuccess<{ tasks: TaskDocument[] }>(davidRemaining));
-      assertEquals(davidRemaining.tasks.length, 0);
+      assert(isSuccess<{ tasks: TaskDocument[] }>(davidRemaining[0]));
+      assertEquals(davidRemaining[0].tasks.length, 0);
       console.log("Empty list queries work as expected.");
 
       const t1Res = await tasksConcept.createTask({
@@ -333,19 +337,21 @@ Deno.test("TasksConcept", async (t) => {
 
       console.log(`Query: _getTasks on fully completed list`);
       davidTasks = await tasksConcept._getTasks({ user: userDavid });
-      assert(isSuccess<{ tasks: TaskDocument[] }>(davidTasks));
-      assertEquals(davidTasks.tasks.length, 2);
-      assert(davidTasks.tasks.every((t) => t.status === "DONE"));
+      assert(isSuccess<{ tasks: TaskDocument[] }>(davidTasks[0]));
+      assertEquals(davidTasks[0].tasks.length, 2);
+      assert(davidTasks[0].tasks.every((t) => t.status === "DONE"));
 
       console.log(`Query: _getRemainingTasks on fully completed list`);
       davidRemaining = await tasksConcept._getRemainingTasks({
         user: userDavid,
       });
-      assert(isSuccess<{ tasks: TaskDocument[] }>(davidRemaining));
-      assertEquals(davidRemaining.tasks.length, 0);
+      assert(isSuccess<{ tasks: TaskDocument[] }>(davidRemaining[0]));
+      assertEquals(davidRemaining[0].tasks.length, 0);
       console.log("Fully completed list queries work as expected.");
     },
   );
 
+  // Ensure all pending operations complete before closing
+  await new Promise((resolve) => setTimeout(resolve, 100));
   await client.close();
 });

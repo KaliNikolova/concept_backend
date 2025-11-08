@@ -193,9 +193,11 @@ export default class ScheduleConcept {
   }
 
   /**
+   * @query _getSlots (user: User): (slot: BusySlot)
    * @effect Returns all busy slots for the user, regardless of origin.
    */
-  async _getSlots({ user }: { user: User }): Promise<BusySlot[]> {
-    return await this.busySlots.find({ owner: user }).toArray();
+  async _getSlots({ user }: { user: User }): Promise<{ slot: BusySlot }[]> {
+    const slots = await this.busySlots.find({ owner: user }).toArray();
+    return slots.map((slot) => ({ slot }));
   }
 }

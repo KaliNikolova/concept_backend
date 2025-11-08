@@ -52,10 +52,10 @@ Deno.test("PlannerConcept: Operational Principle", async () => {
     // deno-lint-ignore no-explicit-any
     const schedule = await (planner as any)._getScheduledTasks({ user });
     console.log(" > _getScheduledTasks result:", schedule);
-    assertEquals(schedule.tasks.length, 3);
-    assertEquals(schedule.tasks[0].task, task1);
-    assertEquals(schedule.tasks[1].task, task2);
-    assertEquals(schedule.tasks[2].task, task3);
+    assertEquals(schedule[0].tasks.length, 3);
+    assertEquals(schedule[0].tasks[0].task, task1);
+    assertEquals(schedule[0].tasks[1].task, task2);
+    assertEquals(schedule[0].tasks[2].task, task3);
 
     console.log(`2. Getting task after '${task1}'.`);
     const nextAfter1 = await planner.getNextTask({
@@ -89,12 +89,12 @@ Deno.test("PlannerConcept: Operational Principle", async () => {
 });
 
 Deno.test("PlannerConcept: Interesting Scenarios", async (t) => {
-  await t.step(
-    "Scenario 1: Replan mid-day after some tasks are done",
-    async () => {
-      console.log("\n--- SCENARIO: Replan mid-day ---");
-      const [db, client] = await testDb();
-      try {
+  const [db, client] = await testDb();
+  try {
+    await t.step(
+      "Scenario 1: Replan mid-day after some tasks are done",
+      async () => {
+        console.log("\n--- SCENARIO: Replan mid-day ---");
         const user = "user:bob" as ID;
 
         // Step 1: Initial plan at 9 AM, with tasks both before and after the replan time.
@@ -144,20 +144,15 @@ Deno.test("PlannerConcept: Interesting Scenarios", async (t) => {
           "error" in checkAfternoon,
           "Future tasks scheduled after replan time should be deleted.",
         );
-      } finally {
-        await client.close();
-      }
-    },
-  );
+      },
+    );
 
-  await t.step(
-    "Scenario 2: Not enough time left to schedule all tasks",
-    async () => {
-      console.log("\n--- SCENARIO: Not enough time ---");
-      const [db, client] = await testDb();
-      // Pretend it's 8 PM (20:00). We have less than 4 hours left in the day.
-      const planner = new PlannerConcept(db, () => todayAt(20, 0));
-      try {
+    await t.step(
+      "Scenario 2: Not enough time left to schedule all tasks",
+      async () => {
+        console.log("\n--- SCENARIO: Not enough time ---");
+        // Pretend it's 8 PM (20:00). We have less than 4 hours left in the day.
+        const planner = new PlannerConcept(db, () => todayAt(20, 0));
         const user = "user:charlie" as ID;
         const tasks = [
           { id: "task:short-1" as ID, duration: 60 }, // 1 hour, fits
@@ -185,18 +180,13 @@ Deno.test("PlannerConcept: Interesting Scenarios", async (t) => {
           "error" in checkNoFit,
           "The task that doesn't fit should not exist in the schedule.",
         );
-      } finally {
-        await client.close();
-      }
-    },
-  );
+      },
+    );
 
-  // This test does not depend on time, so no mock provider is strictly necessary, but we use it for consistency.
-  await t.step("Scenario 3: Clearing and deleting plans", async () => {
-    console.log("\n--- SCENARIO: Clear and delete ---");
-    const [db, client] = await testDb();
-    const planner = new PlannerConcept(db, MOCK_TIME_PROVIDER);
-    try {
+    // This test does not depend on time, so no mock provider is strictly necessary, but we use it for consistency.
+    await t.step("Scenario 3: Clearing and deleting plans", async () => {
+      console.log("\n--- SCENARIO: Clear and delete ---");
+      const planner = new PlannerConcept(db, MOCK_TIME_PROVIDER);
       const userA = "user:diana" as ID;
       const userB = "user:edward" as ID;
       const tasks = [{ id: "task:generic" as ID, duration: 60 }];
@@ -223,8 +213,8 @@ Deno.test("PlannerConcept: Interesting Scenarios", async (t) => {
         completedTask: "task:generic" as ID,
       });
       assert("error" in afterDelete, "User B's plan should be gone.");
-    } finally {
-      await client.close();
-    }
-  });
+    });
+  } finally {
+    await client.close();
+  }
 });

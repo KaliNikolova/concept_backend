@@ -218,18 +218,23 @@ export default class PlannerConcept {
   }
 
   /**
+   * @query _getScheduledTasks
    * Retrieves all scheduled tasks for a given user.
    * @returns A list of scheduled tasks, sorted by start time.
    */
   async _getScheduledTasks(
     { user }: { user: User },
-  ): Promise<{ tasks: ScheduledTask[] }> {
+  ): Promise<{ tasks: ScheduledTask[] }[]> { // CORRECTED RETURN TYPE
     const tasks = await this.scheduledTasks
       .find({ owner: user }, {
         sort: { plannedStart: 1 },
       })
       .toArray();
-    return { tasks };
+
+    // CORRECT: Return the result wrapped in an array.
+    // Even if there are no tasks, this will correctly return [{ tasks: [] }],
+    // which the sync engine handles perfectly.
+    return [{ tasks }];
   }
 
   /**

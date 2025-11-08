@@ -71,20 +71,15 @@ export default class FocusConcept {
   }
 
   /**
-   * Returns the user's current task, if one is set.
-   *
-   * @param user The ID of the user.
-   * @returns An object containing the task ID if found, otherwise an empty object.
+   * @query _getCurrentTask
+   * Retrieves the user's currently focused task.
+   * @returns An array containing the user's current task, or an empty array if none is set.
    */
-  async getCurrentTask({ user }: { user: User }): Promise<{ task?: Task }> {
-    // This action can always be performed.
-    // requires: true
-
-    // effects: returns the user's current task, if any
-    const doc = await this.currentTasks.findOne({ _id: user });
-    if (doc) {
-      return { task: doc.task };
+  async _getCurrentTask({ user }: { user: User }): Promise<{ task: Task }[]> {
+    const focusDoc = await this.currentTasks.findOne({ _id: user });
+    if (!focusDoc) {
+      return [];
     }
-    return {};
+    return [{ task: focusDoc.task }];
   }
 }

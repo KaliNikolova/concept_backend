@@ -47,8 +47,8 @@ Deno.test("UserAccountConcept", async (t) => {
 
       // Verification step using a query to confirm state
       const profile = await userAccount._getUserProfile({ user: aliceId });
-      assertEquals(profile?.displayName, "Alice");
-      assertEquals(profile?.email, "alice@example.com");
+      assertEquals(profile[0]?.displayName, "Alice");
+      assertEquals(profile[0]?.email, "alice@example.com");
     },
   );
 
@@ -107,7 +107,7 @@ Deno.test("UserAccountConcept", async (t) => {
         user: aliceId,
       });
       assertEquals(
-        updatedProfile?.displayName,
+        updatedProfile[0]?.displayName,
         "Alice Smith",
         "Display name should be updated",
       );
@@ -129,7 +129,7 @@ Deno.test("UserAccountConcept", async (t) => {
       });
       assertEquals(
         deletedProfile,
-        null,
+        [],
         "Deleted user's profile should not be found",
       );
 

@@ -242,6 +242,74 @@ This document describes the REST API for the Concept Backend. All endpoints use 
 
 ---
 
+### POST /api/UserAccount/setWorkingHours
+
+**Description:** Sets the user's working day hours (start and end times).
+
+**Authentication:** Required (session token)
+
+**Request Body:**
+```json
+{
+  "session": "ID",
+  "startTime": "string",
+  "endTime": "string"
+}
+```
+
+**Notes:**
+- `startTime` and `endTime` must be in "HH:MM" format (e.g., "09:00", "19:00")
+- Times are in 24-hour format
+
+**Success Response Body:**
+```json
+{
+  "status": "ok"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
+**Example Errors:**
+- "Invalid time format. Use HH:MM"
+- "User not found"
+
+---
+
+### POST /api/UserAccount/_getWorkingHours
+
+**Description:** Retrieves the user's working day hours. Returns defaults (09:00-19:00) if not set.
+
+**Authentication:** Required (session token)
+
+**Request Body:**
+```json
+{
+  "session": "ID"
+}
+```
+
+**Success Response Body:**
+```json
+{
+  "workingHours": {
+    "start": "string",
+    "end": "string"
+  }
+}
+```
+
+**Notes:**
+- Times are in "HH:MM" format (24-hour)
+- Default values are "09:00" (9 AM) and "19:00" (7 PM) if not set by the user
+
+---
+
 ### POST /api/UserAccount/_findUserByEmail
 
 **Description:** Finds a user by their email address.
@@ -692,7 +760,9 @@ This document describes the REST API for the Concept Backend. All endpoints use 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "status": "ok"
+}
 ```
 
 **Error Response Body:**

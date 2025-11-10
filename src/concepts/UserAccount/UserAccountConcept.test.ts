@@ -177,5 +177,79 @@ Deno.test("UserAccountConcept", async (t) => {
     },
   );
 
+  await t.step(
+    "Interesting Scenario 5: Working Hours - Set and Get",
+    async () => {
+      // Register a new user for this test
+      const registerResult = await userAccount.register({
+        email: "hours@test.com",
+        password: "password123",
+        displayName: "Hours Tester",
+      });
+      assert("user" in registerResult);
+      const user = registerResult.user;
+
+      // Step 1: Get default working hours (should be 09:00-19:00)
+      console.log("\nAction: _getWorkingHours (defaults)");
+      const defaultHours = await userAccount._getWorkingHours({ user });
+      console.log("Result:", defaultHours);
+      assertEquals(
+        defaultHours[0]?.workingHours.start,
+        "09:00",
+        "Default start time should be 09:00",
+      );
+      assertEquals(
+        defaultHours[0]?.workingHours.end,
+        "19:00",
+        "Default end time should be 19:00",
+      );
+
+      // Step 2: Set custom working hours
+      const setInput = {
+        user,
+        startTime: "08:30",
+        endTime: "17:30",
+      };
+      console.log("\nAction: setWorkingHours", setInput);
+      const setResult = await userAccount.setWorkingHours(setInput);
+      console.log("Result:", setResult);
+      assertEquals(setResult, {}, "Setting working hours should succeed");
+
+      // Step 3: Get updated working hours
+      console.log("\nAction: _getWorkingHours (after update)");
+      const updatedHours = await userAccount._getWorkingHours({ user });
+      console.log("Result:", updatedHours);
+      assertEquals(
+        updatedHours[0]?.workingHours.start,
+        "08:30",
+        "Start time should be updated to 08:30",
+      );
+      assertEquals(
+        updatedHours[0]?.workingHours.end,
+        "17:30",
+        "End time should be updated to 17:30",
+      );
+
+      // Step 4: Test invalid time format
+      const invalidInput = {
+        user,
+        startTime: "25:00",
+        endTime: "17:30",
+      };
+      console.log("\nAction: setWorkingHours (invalid format)", invalidInput);
+      const invalidResult = await userAccount.setWorkingHours(invalidInput);
+      console.log("Result:", invalidResult);
+      assert(
+        "error" in invalidResult,
+        "Setting invalid time format should fail",
+      );
+      assertEquals(
+        invalidResult.error,
+        "Invalid time format. Use HH:MM",
+        "Error message should indicate format issue",
+      );
+    },
+  );
+
   await client.close();
 });

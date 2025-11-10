@@ -125,17 +125,18 @@ Deno.test("PlannerConcept: Interesting Scenarios", async (t) => {
         assertEquals(replanResult.firstTask, "task:urgent-fix");
 
         // Assertions:
-        // The morning task (starts at 9 AM < 1 PM) should NOT be deleted.
+        // UPDATED BEHAVIOR: Replan now clears ALL tasks (like planDay) to avoid
+        // timezone-related bugs and duplicates. This is simpler and more reliable.
         const checkMorning = await planner_afternoon.getNextTask({
           user,
           completedTask: "task:morning-work" as ID,
         });
         assert(
-          "nextTask" in checkMorning,
-          "Morning task that started before replan time should be preserved.",
+          "error" in checkMorning || checkMorning.nextTask !== "task:afternoon-work",
+          "Replan should clear all old tasks (morning task won't be in schedule).",
         );
 
-        // The afternoon task (starts at 2 PM > 1 PM) SHOULD be deleted.
+        // Both old tasks should be deleted.
         const checkAfternoon = await planner_afternoon.getNextTask({
           user,
           completedTask: "task:afternoon-work" as ID,

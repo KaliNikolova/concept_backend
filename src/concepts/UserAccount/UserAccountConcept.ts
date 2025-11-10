@@ -23,12 +23,16 @@ type User = ID;
  *   an email String
  *   a passwordHash String
  *   a displayName String
+ *   an optional workingDayStart String (HH:MM format)
+ *   an optional workingDayEnd String (HH:MM format)
  */
 interface UserDoc {
   _id: User;
   email: string;
   passwordHash: string;
   displayName: string;
+  workingDayStart?: string;
+  workingDayEnd?: string;
 }
 
 export default class UserAccountConcept {
@@ -121,6 +125,40 @@ export default class UserAccountConcept {
   }
 
   /**
+   * @action setWorkingHours
+   * @effects sets the user's working day start and end times
+   * @param {Object} args
+   * @param {User} args.user - The ID of the user whose working hours are to be set.
+   * @param {string} args.startTime - Start time in HH:MM format (e.g., "09:00").
+   * @param {string} args.endTime - End time in HH:MM format (e.g., "19:00").
+   * @returns {Promise<Empty | { error: string }>} An empty object on success or an error message.
+   */
+  async setWorkingHours(
+    { user, startTime, endTime }: {
+      user: User;
+      startTime: string;
+      endTime: string;
+    },
+  ): Promise<Empty | { error: string }> {
+    // Validate time format (HH:MM)
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+      return { error: "Invalid time format. Use HH:MM" };
+    }
+
+    const result = await this.users.updateOne(
+      { _id: user },
+      { $set: { workingDayStart: startTime, workingDayEnd: endTime } },
+    );
+
+    if (result.matchedCount === 0) {
+      return { error: "User not found" };
+    }
+
+    return {};
+  }
+
+  /**
    * @action deleteAccount
    * @effects removes the user and all their associated data from this concept's state.
    *   (Any other concepts relying on this user ID would need syncs to handle cascade deletions.)
@@ -158,6 +196,31 @@ export default class UserAccountConcept {
       profile: {
         displayName: userDoc.displayName,
         email: userDoc.email,
+      },
+    }];
+  }
+
+  /**
+   * @query _getWorkingHours
+   * @effects returns the user's working day hours (start and end times)
+   * @param {Object} args
+   * @param {User} args.user - The ID of the user.
+   * @returns {Promise<{ workingHours: { start: string; end: string } }[]>} The user's working hours in HH:MM format, or defaults (09:00-19:00) if not set.
+   */
+  async _getWorkingHours(
+    { user }: { user: User },
+  ): Promise<{ workingHours: { start: string; end: string } }[]> {
+    const userDoc = await this.users.findOne({ _id: user });
+
+    if (!userDoc) {
+      return [];
+    }
+
+    // Return stored values or defaults (9 AM - 7 PM)
+    return [{
+      workingHours: {
+        start: userDoc.workingDayStart || "09:00",
+        end: userDoc.workingDayEnd || "19:00",
       },
     }];
   }

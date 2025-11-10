@@ -220,6 +220,94 @@ export const UpdateProfileError: Sync = ({ request, error }) => ({
 
 /**
  * =============================================================================
+ * SET WORKING HOURS
+ * Sets the user's working day hours (start and end times).
+ * =============================================================================
+ */
+
+/**
+ * @sync SetWorkingHoursRequest
+ * @when a request is made to set working hours with a session token
+ * @where the session is valid
+ * @then set the user's working hours
+ */
+export const SetWorkingHoursRequest: Sync = (
+  { request, session, user, startTime, endTime },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/UserAccount/setWorkingHours", session, startTime, endTime },
+    { request },
+  ]),
+  where: async (frames) =>
+    frames.query(Sessioning._getUser, { session }, { user }),
+  then: actions([
+    UserAccount.setWorkingHours,
+    { user, startTime, endTime },
+  ]),
+});
+
+/**
+ * @sync SetWorkingHoursResponse
+ * @when set working hours succeeds
+ * @then respond with success status
+ */
+export const SetWorkingHoursResponse: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/UserAccount/setWorkingHours" }, { request }],
+    [UserAccount.setWorkingHours, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, status: "ok" }]),
+});
+
+/**
+ * @sync SetWorkingHoursError
+ * @when set working hours fails
+ * @then respond with the error
+ */
+export const SetWorkingHoursError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/UserAccount/setWorkingHours" }, { request }],
+    [UserAccount.setWorkingHours, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+/**
+ * =============================================================================
+ * GET WORKING HOURS
+ * Fetches the user's working day hours based on their session.
+ * =============================================================================
+ */
+
+/**
+ * @sync GetWorkingHours
+ * @when a request is made to get working hours with a session token
+ * @where the session is valid and we can retrieve the user's working hours
+ * @then respond with the working hours data
+ */
+export const GetWorkingHours: Sync = (
+  { request, session, user, workingHours },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/UserAccount/_getWorkingHours", session },
+    { request },
+  ]),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning._getUser, { session }, { user });
+    if (frames.length === 0) return frames;
+    return await frames.query(
+      UserAccount._getWorkingHours,
+      { user },
+      { workingHours },
+    );
+  },
+  then: actions([Requesting.respond, { request, workingHours }]),
+});
+
+/**
+ * =============================================================================
  * DELETE ACCOUNT
  * Deletes the user's account and their session. This should cascade to delete
  * all user data from other concepts (handled by separate syncs).

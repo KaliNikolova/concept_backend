@@ -66,6 +66,7 @@ Schedule:
 Focus:
  1. `_getCurrentTask`
 
+
 #### test results:
 
 ```
@@ -522,3 +523,51 @@ ok | 19 passed (13 steps) | 0 failed (22s)
 
 PS C:\Users\kalin\OneDrive - Massachusetts Institute of Technology\Uni\Senior\6104\concept_backend>
 ```
+
+
+
+
+
+
+ 
+
+
+#### Other changes:
+
+I added fields for the start and end of the working day to UserAccount:
+
+1. UserDoc Interface (src/concepts/UserAccount/UserAccountConcept.ts)
+
+	- Added workingDayStart?: string and workingDayEnd?: string fields
+
+2. New Actions & Queries
+
+	- setWorkingHours() - Sets user's working hours with HH:MM validation
+
+	- _getWorkingHours() - Returns stored hours or defaults (09:00-19:00)
+
+3. Auth Syncs (src/syncs/auth.sync.ts)
+
+	- SetWorkingHoursRequest - Authenticates and calls action
+	
+	- SetWorkingHoursResponse - Returns success
+	
+	- SetWorkingHoursError - Returns validation errors
+	
+	- GetWorkingHours - Fetches hours for authenticated user
+
+4. API Documentation (design/concepts/API/api_spec.md)
+
+	- /api/UserAccount/setWorkingHours endpoint
+	
+	- /api/UserAccount/_getWorkingHours endpoint
+
+5. Tests (src/concepts/UserAccount/UserAccountConcept.test.ts)
+
+	- Test for default hours (09:00-19:00)
+	
+	- Test for setting custom hours
+	
+	- Test for retrieving updated hours
+	
+	- Test for invalid time format validation

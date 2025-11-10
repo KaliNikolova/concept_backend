@@ -90,6 +90,8 @@ export const exclusions: Array<string> = [
   "/api/UserAccount/deleteAccount",
   "/api/UserAccount/_getUserProfile",
   "/api/UserAccount/_findUserByEmail",
+  "/api/UserAccount/setWorkingHours",
+  "/api/UserAccount/_getWorkingHours",
 
   // LikertSurvey is an example concept and not used in production
   "/api/LikertSurvey/createSurvey",

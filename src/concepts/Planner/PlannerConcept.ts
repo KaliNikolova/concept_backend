@@ -74,34 +74,27 @@ export default class PlannerConcept {
       end: new Date(slot.end),
     }));
 
-    // Use the earliest busy slot or current time to determine the planning window
+    // Plan for today only (from now until end of today)
     const now = this.timeProvider();
-
-    // If we have busy slots, use them to infer the planning day
-    // Otherwise fall back to server's current day
-    let planningDay = now;
-    if (busySlotsWithDates.length > 0) {
-      // Use the date from the first busy slot as the planning reference
-      const firstSlotDate = busySlotsWithDates[0].start;
-      planningDay = firstSlotDate;
-    }
-
-    const startOfDay = new Date(
-      planningDay.getFullYear(),
-      planningDay.getMonth(),
-      planningDay.getDate(),
-      0,
-      0,
-      0,
+    
+    // Sort busy slots for processing
+    const sortedSlots = busySlotsWithDates.sort((a, b) => 
+      a.start.getTime() - b.start.getTime()
     );
+    
+    // Always use TODAY (server's current day) as the planning day
+    // Do NOT extend into tomorrow even if busy slots exist tomorrow
     const endOfDay = new Date(
-      planningDay.getFullYear(),
-      planningDay.getMonth(),
-      planningDay.getDate(),
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
       23,
       59,
       59,
+      999,
     );
+
+    console.log(`[Planner] Planning for today only: now (${now.toISOString()}) to end of day (${endOfDay.toISOString()})`);
 
     // Clear ALL scheduled tasks for the user (to avoid timezone confusion)
     console.log(
@@ -114,8 +107,8 @@ export default class PlannerConcept {
       `[Planner] Deleted ${deleteResult.deletedCount} existing scheduled tasks`,
     );
 
-    // Plan from now if it's within the planning day, otherwise from start of day
-    const planFrom = (now >= startOfDay && now < endOfDay) ? now : startOfDay;
+    // Always plan from NOW (current time), not from midnight or planningDate
+    const planFrom = now;
 
     if (planFrom >= endOfDay) {
       return {};
@@ -149,41 +142,36 @@ export default class PlannerConcept {
 
     const now = this.timeProvider();
 
-    // Infer planning day from busy slots (same as planDay)
-    let planningDay = now;
-    if (busySlotsWithDates.length > 0) {
-      const firstSlotDate = busySlotsWithDates[0].start;
-      planningDay = firstSlotDate;
-    }
-
-    const startOfDay = new Date(
-      planningDay.getFullYear(),
-      planningDay.getMonth(),
-      planningDay.getDate(),
-      0,
-      0,
-      0,
+    // Sort busy slots for processing
+    const sortedSlots = busySlotsWithDates.sort((a, b) => 
+      a.start.getTime() - b.start.getTime()
     );
+    
+    // Always replan for TODAY only, not tomorrow
     const endOfDay = new Date(
-      planningDay.getFullYear(),
-      planningDay.getMonth(),
-      planningDay.getDate(),
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
       23,
       59,
       59,
+      999,
     );
 
-    // Delete ALL scheduled tasks for the user (to avoid timezone confusion)
+    console.log(`[Planner] Replan: Planning for today only until ${endOfDay.toISOString()}`);
+    console.log(`[Planner] Server now: ${now.toISOString()}`);
+
+    // Delete ALL scheduled tasks for the user (same as planDay, avoids timezone bugs)
     console.log(`[Planner] Replan: Clearing ALL scheduled tasks for user`);
     const deleteResult = await this.scheduledTasks.deleteMany({
       owner: user,
     });
     console.log(
-      `[Planner] Deleted ${deleteResult.deletedCount} existing scheduled tasks`,
+      `[Planner] Deleted ${deleteResult.deletedCount} scheduled tasks`,
     );
 
-    // Plan from now if it's within the planning day, otherwise from start of day
-    const planFrom = (now >= startOfDay && now < endOfDay) ? now : startOfDay;
+    // Always plan from NOW (current time)
+    const planFrom = now;
 
     if (planFrom >= endOfDay) {
       return {};
@@ -326,6 +314,14 @@ export default class PlannerConcept {
           const plannedEnd = new Date(
             plannedStart.getTime() + taskDurationMillis,
           );
+
+          // Don't schedule tasks that would end after the planning window
+          if (plannedEnd > planUntil) {
+            console.log(
+              `[Planner] Skipping task ${task.id} - would end at ${plannedEnd.toISOString()} (after planUntil ${planUntil.toISOString()})`,
+            );
+            break; // Can't fit this task or any larger ones in remaining slots
+          }
 
           newScheduledTasks.push({
             _id: freshID(),

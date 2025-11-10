@@ -105,12 +105,12 @@ export const UpdateSlotRequest: Sync = (
   }]),
 });
 
-export const UpdateSlotResponse: Sync = ({ request, slot }) => ({
+export const UpdateSlotResponse: Sync = ({ request }) => ({
   when: actions(
     [Requesting.request, { path: "/Schedule/updateSlot" }, { request }],
-    [Schedule.updateSlot, {}, { slot }],
+    [Schedule.updateSlot, {}, {}],
   ),
-  then: actions([Requesting.respond, { request, slot }]),
+  then: actions([Requesting.respond, { request, status: "ok" }]),
 });
 
 export const UpdateSlotError: Sync = ({ request, error }) => ({

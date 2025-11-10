@@ -47,8 +47,8 @@ Deno.test("UserAccountConcept", async (t) => {
 
       // Verification step using a query to confirm state
       const profile = await userAccount._getUserProfile({ user: aliceId });
-      assertEquals(profile[0]?.displayName, "Alice");
-      assertEquals(profile[0]?.email, "alice@example.com");
+      assertEquals(profile[0]?.profile.displayName, "Alice");
+      assertEquals(profile[0]?.profile.email, "alice@example.com");
     },
   );
 
@@ -107,7 +107,7 @@ Deno.test("UserAccountConcept", async (t) => {
         user: aliceId,
       });
       assertEquals(
-        updatedProfile[0]?.displayName,
+        updatedProfile[0]?.profile.displayName,
         "Alice Smith",
         "Display name should be updated",
       );

@@ -159,19 +159,21 @@ export default class UserAccountConcept {
    * @effects returns the display name and email of a user.
    * @param {Object} args
    * @param {User} args.user - The ID of the user.
-   * @returns {Promise<{ displayName: string; email: string } | null>} The user's public profile data or null if not found.
+   * @returns {Promise<{ profile: { displayName: string; email: string } }[]>} The user's public profile data in an array, or an empty array if not found.
    */
   async _getUserProfile(
     { user }: { user: User },
-  ): Promise<{ displayName: string; email: string } | null> {
+  ): Promise<{ profile: { displayName: string; email: string } }[]> {
     const userDoc = await this.users.findOne({ _id: user });
     if (!userDoc) {
-      return null;
+      return [];
     }
-    return {
-      displayName: userDoc.displayName,
-      email: userDoc.email,
-    };
+    return [{
+      profile: {
+        displayName: userDoc.displayName,
+        email: userDoc.email,
+      },
+    }];
   }
 
   /**
@@ -242,8 +244,7 @@ deleteAccount (user: User): (error: String)
 effect removes the user and all their associated data
 
 queries
-_getUserProfile (user: User): (displayName: String, email: String)
-_getUserProfile (user: User): (error: String)
+_getUserProfile (user: User): (profile: { displayName: String, email: String })
 effects returns the display name and email of a user.
 _findUserByEmail (email: String): (user: User)
 _findUserByEmail (email: String): (error: String)

@@ -1,5 +1,5 @@
 import { actions, Sync } from "@engine";
-import { Planner, Requesting, Sessioning } from "@concepts";
+import { Focus, Planner, Requesting, Sessioning } from "@concepts";
 
 /**
  * =============================================================================
@@ -65,6 +65,19 @@ export const PlanDayError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
+/**
+ * @sync PlanDaySetFocus
+ * @when planDay succeeds and returns a firstTask
+ * @then automatically set that task as the current focus
+ */
+export const PlanDaySetFocus: Sync = ({ user, firstTask }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Planner/planDay" }, {}],
+    [Planner.planDay, { user }, { firstTask }],
+  ),
+  then: actions([Focus.setCurrentTask, { user, task: firstTask }]),
+});
+
 // --- REPLAN ---
 
 export const ReplanRequest: Sync = (
@@ -94,6 +107,19 @@ export const ReplanError: Sync = ({ request, error }) => ({
     [Planner.replan, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
+});
+
+/**
+ * @sync ReplanSetFocus
+ * @when replan succeeds and returns a firstTask
+ * @then automatically set that task as the current focus
+ */
+export const ReplanSetFocus: Sync = ({ user, firstTask }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Planner/replan" }, {}],
+    [Planner.replan, { user }, { firstTask }],
+  ),
+  then: actions([Focus.setCurrentTask, { user, task: firstTask }]),
 });
 
 // --- CLEAR DAY ---

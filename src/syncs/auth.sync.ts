@@ -11,6 +11,23 @@ import {
 
 /**
  * =============================================================================
+ * REGISTRATION FLOW
+ * When a user registers, automatically create their task list.
+ * =============================================================================
+ */
+
+/**
+ * @sync RegistrationTaskListCreation
+ * @when a user successfully registers
+ * @then create an empty task list for them
+ */
+export const RegistrationTaskListCreation: Sync = ({ user }) => ({
+  when: actions([UserAccount.register, {}, { user }]),
+  then: actions([Tasks.createUserTasks, { user }]),
+});
+
+/**
+ * =============================================================================
  * LOGIN FLOW
  * Login requires coordination between UserAccount and Sessioning concepts.
  * When a user successfully logs in, we create a session and return the token.
@@ -130,7 +147,9 @@ export const LogoutError: Sync = ({ request, error }) => ({
  * @where the session is valid and we can retrieve the user's profile
  * @then respond with the profile data
  */
-export const GetUserProfile: Sync = ({ request, session, user, profile }) => ({
+export const GetUserProfile: Sync = (
+  { request, session, user, profile },
+) => ({
   when: actions([
     Requesting.request,
     { path: "/UserAccount/_getUserProfile", session },
@@ -139,10 +158,8 @@ export const GetUserProfile: Sync = ({ request, session, user, profile }) => ({
   where: async (frames) => {
     frames = await frames.query(Sessioning._getUser, { session }, { user });
     if (frames.length === 0) return frames; // Unauthorized - request will timeout
-    frames = await frames.query(UserAccount._getUserProfile, { user }, {
-      profile,
-    });
-    return frames;
+    // Query returns an array: [{ displayName, email }]
+    return await frames.query(UserAccount._getUserProfile, { user }, { profile });
   },
   then: actions([Requesting.respond, { request, profile }]),
 });

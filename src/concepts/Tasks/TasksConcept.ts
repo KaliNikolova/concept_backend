@@ -275,7 +275,7 @@ export default class TasksConcept {
   ): Promise<{ tasks: TaskDocument[] }[]> {
     const userTasks = await this.userTasks.findOne({ _id: user });
     if (!userTasks) {
-      return []; // Return empty array if user has no task list
+      return [{ tasks: [] }]; // Return one frame with empty tasks array
     }
 
     if (userTasks.orderedTasks.length === 0) {
@@ -307,11 +307,8 @@ export default class TasksConcept {
   ): Promise<{ tasks: TaskDocument[] }[]> {
     const allUserTasksResult = await this._getTasks({ user });
 
-    if (allUserTasksResult.length === 0) {
-      return []; // User has no task list or no tasks
-    }
-
-    const allTasks = allUserTasksResult[0].tasks;
+    // _getTasks now always returns at least one frame (even if empty)
+    const allTasks = allUserTasksResult[0]?.tasks || [];
     const remainingTasks = allTasks.filter(
       (task) => task.status === "TODO",
     );

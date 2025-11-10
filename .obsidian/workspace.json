@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "design/concepts/overall_concept_design.md",
+                "file": "design/tools/api-extraction-from-code.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "overall_concept_design"
+              "title": "api-extraction-from-code"
             }
           }
         ],
@@ -186,6 +186,12 @@
   },
   "active": "50c8f38515c0b668",
   "lastOpenFiles": [
+    "design/tools/api-extraction-from-spec.md",
+    "design/concepts/API/api_spec.md",
+    "design/tools/api-extraction-from-code.md",
+    "design/concepts/overall_concept_design.md",
+    "test_walk2.ts",
+    "test_walk.ts",
     "design/background/implementing-synchronizations.md",
     "src/syncs/focus.sync.ts",
     "design/tools/sync-background.md",
@@ -209,18 +215,12 @@
     "context/design/brainstorming/questioning.md/20251107_181015.a5296565.md",
     "context/design/brainstorming/questioning.md/steps/implement.548c2578.md",
     "context/design/brainstorming/questioning.md/20251107_180849.d7f4a397.md",
-    "context/design/brainstorming/questioning.md/steps/file.00a78f47.md",
-    "context/design/brainstorming/questioning.md/steps/response.e16f59bb.md",
-    "context/design/brainstorming/questioning.md/20251107_180808.8823f3b7.md",
-    "context/design/brainstorming/questioning.md/steps/implement.a39eeafa.md",
     "context/src/concepts/Planner/PlannerConcept.test.ts",
     "src/syncs/planner.sync.ts",
     "src/syncs/schedule.sync.ts",
     "src/syncs/tasks.sync.ts",
     "src/syncs/auth.sync.ts",
     "src/concepts/Sessioning/SessioningConcept.ts",
-    "src/concepts/Sessioning",
-    "src/syncs/app.sync.ts",
-    "context/deno.json"
+    "src/concepts/Sessioning"
   ]
 }

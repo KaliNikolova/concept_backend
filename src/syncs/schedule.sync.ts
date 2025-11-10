@@ -14,19 +14,17 @@ import { Requesting, Schedule, Sessioning } from "@concepts";
  * @then the user's slots are returned.
  */
 export const GetSlots: Sync = (
-  { request, session, user, slots, start, end },
+  { request, session, user, slots },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/api/Schedule/_getSlots", session, start, end },
+    { path: "/Schedule/_getSlots", session },
     { request },
   ]),
   where: async (frames) => {
     frames = await frames.query(Sessioning._getUser, { session }, { user });
     if (frames.length === 0) return frames; // Unauthorized
-    return await frames.query(Schedule._getSlots, { owner: user, start, end }, {
-      slots,
-    });
+    return await frames.query(Schedule._getSlots, { user }, { slots });
   },
   then: actions([Requesting.respond, { request, slots }]),
 });
@@ -41,34 +39,32 @@ export const GetSlots: Sync = (
 // --- BLOCK TIME ---
 
 export const BlockTimeRequest: Sync = (
-  { request, session, user, startTime, endTime, title, taskId },
+  { request, session, user, startTime, endTime, description },
 ) => ({
   when: actions([
     Requesting.request,
     {
-      path: "/api/Schedule/blockTime",
+      path: "/Schedule/blockTime",
       session,
       startTime,
       endTime,
-      title,
-      taskId,
+      description,
     },
     { request },
   ]),
   where: async (frames) =>
     frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([Schedule.blockTime, {
-    owner: user,
+    user,
     startTime,
     endTime,
-    title,
-    taskId,
+    description,
   }]),
 });
 
 export const BlockTimeResponse: Sync = ({ request, slot }) => ({
   when: actions(
-    [Requesting.request, { path: "/api/Schedule/blockTime" }, { request }],
+    [Requesting.request, { path: "/Schedule/blockTime" }, { request }],
     [Schedule.blockTime, {}, { slot }],
   ),
   then: actions([Requesting.respond, { request, slot }]),
@@ -76,7 +72,7 @@ export const BlockTimeResponse: Sync = ({ request, slot }) => ({
 
 export const BlockTimeError: Sync = ({ request, error }) => ({
   when: actions(
-    [Requesting.request, { path: "/api/Schedule/blockTime" }, { request }],
+    [Requesting.request, { path: "/Schedule/blockTime" }, { request }],
     [Schedule.blockTime, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
@@ -85,34 +81,33 @@ export const BlockTimeError: Sync = ({ request, error }) => ({
 // --- UPDATE SLOT ---
 
 export const UpdateSlotRequest: Sync = (
-  { request, session, user, slot, startTime, endTime, title },
+  { request, session, user, slot, startTime, endTime, description },
 ) => ({
   when: actions([
     Requesting.request,
     {
-      path: "/api/Schedule/updateSlot",
+      path: "/Schedule/updateSlot",
       session,
       slot,
       startTime,
       endTime,
-      title,
+      description,
     },
     { request },
   ]),
   where: async (frames) =>
     frames.query(Sessioning._getUser, { session }, { user }),
   then: actions([Schedule.updateSlot, {
-    user,
-    slot,
-    startTime,
-    endTime,
-    title,
+    slotId: slot,
+    newStartTime: startTime,
+    newEndTime: endTime,
+    newDescription: description,
   }]),
 });
 
 export const UpdateSlotResponse: Sync = ({ request, slot }) => ({
   when: actions(
-    [Requesting.request, { path: "/api/Schedule/updateSlot" }, { request }],
+    [Requesting.request, { path: "/Schedule/updateSlot" }, { request }],
     [Schedule.updateSlot, {}, { slot }],
   ),
   then: actions([Requesting.respond, { request, slot }]),
@@ -120,7 +115,7 @@ export const UpdateSlotResponse: Sync = ({ request, slot }) => ({
 
 export const UpdateSlotError: Sync = ({ request, error }) => ({
   when: actions(
-    [Requesting.request, { path: "/api/Schedule/updateSlot" }, { request }],
+    [Requesting.request, { path: "/Schedule/updateSlot" }, { request }],
     [Schedule.updateSlot, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
@@ -128,20 +123,20 @@ export const UpdateSlotError: Sync = ({ request, error }) => ({
 
 // --- DELETE SLOT ---
 
-export const DeleteSlotRequest: Sync = ({ request, session, user, slot }) => ({
+export const DeleteSlotRequest: Sync = ({ request, session, user, slotId }) => ({
   when: actions([
     Requesting.request,
-    { path: "/api/Schedule/deleteSlot", session, slot },
+    { path: "/Schedule/deleteSlot", session, slotId },
     { request },
   ]),
   where: async (frames) =>
     frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([Schedule.deleteSlot, { user, slot }]),
+  then: actions([Schedule.deleteSlot, { slotId }]),
 });
 
 export const DeleteSlotResponse: Sync = ({ request }) => ({
   when: actions(
-    [Requesting.request, { path: "/api/Schedule/deleteSlot" }, { request }],
+    [Requesting.request, { path: "/Schedule/deleteSlot" }, { request }],
     [Schedule.deleteSlot, {}, {}],
   ),
   then: actions([Requesting.respond, { request, status: "ok" }]),
@@ -149,7 +144,7 @@ export const DeleteSlotResponse: Sync = ({ request }) => ({
 
 export const DeleteSlotError: Sync = ({ request, error }) => ({
   when: actions(
-    [Requesting.request, { path: "/api/Schedule/deleteSlot" }, { request }],
+    [Requesting.request, { path: "/Schedule/deleteSlot" }, { request }],
     [Schedule.deleteSlot, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
@@ -163,7 +158,7 @@ export const DeleteSlotError: Sync = ({ request, error }) => ({
 export const SyncCalendarRequest: Sync = ({ request, session, user }) => ({
   when: actions([
     Requesting.request,
-    { path: "/api/Schedule/syncCalendar", session },
+    { path: "/Schedule/syncCalendar", session },
     { request },
   ]),
   where: async (frames) =>
@@ -173,7 +168,7 @@ export const SyncCalendarRequest: Sync = ({ request, session, user }) => ({
 
 export const SyncCalendarResponse: Sync = ({ request }) => ({
   when: actions(
-    [Requesting.request, { path: "/api/Schedule/syncCalendar" }, { request }],
+    [Requesting.request, { path: "/Schedule/syncCalendar" }, { request }],
     [Schedule.syncCalendar, {}, {}],
   ),
   then: actions([Requesting.respond, { request, status: "sync_started" }]),
@@ -181,7 +176,7 @@ export const SyncCalendarResponse: Sync = ({ request }) => ({
 
 export const SyncCalendarError: Sync = ({ request, error }) => ({
   when: actions(
-    [Requesting.request, { path: "/api/Schedule/syncCalendar" }, { request }],
+    [Requesting.request, { path: "/Schedule/syncCalendar" }, { request }],
     [Schedule.syncCalendar, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),

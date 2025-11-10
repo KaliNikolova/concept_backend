@@ -145,18 +145,20 @@ export default class UserAccountConcept {
    * @effects returns the display name and email of a user.
    * @param {Object} args
    * @param {User} args.user - The ID of the user.
-   * @returns {Promise<{ displayName: string; email: string }[]>} The user's public profile data in an array, or an empty array if not found.
+   * @returns {Promise<{ profile: { displayName: string; email: string } }[]>} The user's public profile data in an array, or an empty array if not found.
    */
   async _getUserProfile(
     { user }: { user: User },
-  ): Promise<{ displayName: string; email: string }[]> {
+  ): Promise<{ profile: { displayName: string; email: string } }[]> {
     const userDoc = await this.users.findOne({ _id: user });
     if (!userDoc) {
       return [];
     }
     return [{
-      displayName: userDoc.displayName,
-      email: userDoc.email,
+      profile: {
+        displayName: userDoc.displayName,
+        email: userDoc.email,
+      },
     }];
   }
 

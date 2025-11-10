@@ -54,7 +54,7 @@ export const exclusions: Array<string> = [
   // which is handled by synchronizations.
   "/api/Focus/setCurrentTask",
   "/api/Focus/clearCurrentTask",
-  "/api/Focus/getCurrentTask",
+  "/api/Focus/_getCurrentTask",
 
   "/api/Planner/planDay",
   "/api/Planner/replan",
@@ -90,4 +90,13 @@ export const exclusions: Array<string> = [
   "/api/UserAccount/deleteAccount",
   "/api/UserAccount/_getUserProfile",
   "/api/UserAccount/_findUserByEmail",
+
+  // LikertSurvey is an example concept and not used in production
+  "/api/LikertSurvey/createSurvey",
+  "/api/LikertSurvey/addQuestion",
+  "/api/LikertSurvey/submitResponse",
+  "/api/LikertSurvey/updateResponse",
+  "/api/LikertSurvey/_getSurveyQuestions",
+  "/api/LikertSurvey/_getSurveyResponses",
+  "/api/LikertSurvey/_getRespondentAnswers",
 ];

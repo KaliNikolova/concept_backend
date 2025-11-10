@@ -229,8 +229,13 @@ Deno.test({
     userTasks = await tasksConcept._getTasks({ user: userToDelete });
     assertEquals(
       userTasks.length,
+      1,
+      "After deleting all, _getTasks should return one frame.",
+    );
+    assertEquals(
+      userTasks[0].tasks.length,
       0,
-      "After deleting all, _getTasks should return an empty array.",
+      "After deleting all, tasks array should be empty.",
     );
     console.log(`All tasks for ${userToDelete} deleted successfully.`);
   });

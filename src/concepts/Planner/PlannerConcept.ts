@@ -74,29 +74,50 @@ export default class PlannerConcept {
       end: new Date(slot.end),
     }));
 
-    await this.clearDay({ user });
-
+    // Use the earliest busy slot or current time to determine the planning window
     const now = this.timeProvider();
-    const startOfToday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+
+    // If we have busy slots, use them to infer the planning day
+    // Otherwise fall back to server's current day
+    let planningDay = now;
+    if (busySlotsWithDates.length > 0) {
+      // Use the date from the first busy slot as the planning reference
+      const firstSlotDate = busySlotsWithDates[0].start;
+      planningDay = firstSlotDate;
+    }
+
+    const startOfDay = new Date(
+      planningDay.getFullYear(),
+      planningDay.getMonth(),
+      planningDay.getDate(),
       0,
       0,
       0,
     );
-    const endOfToday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+    const endOfDay = new Date(
+      planningDay.getFullYear(),
+      planningDay.getMonth(),
+      planningDay.getDate(),
       23,
       59,
       59,
     );
 
-    const planFrom = now > startOfToday ? now : startOfToday;
+    // Clear ALL scheduled tasks for the user (to avoid timezone confusion)
+    console.log(
+      `[Planner] Clearing ALL scheduled tasks for user before planning`,
+    );
+    const deleteResult = await this.scheduledTasks.deleteMany({
+      owner: user,
+    });
+    console.log(
+      `[Planner] Deleted ${deleteResult.deletedCount} existing scheduled tasks`,
+    );
 
-    if (planFrom >= endOfToday) {
+    // Plan from now if it's within the planning day, otherwise from start of day
+    const planFrom = (now >= startOfDay && now < endOfDay) ? now : startOfDay;
+
+    if (planFrom >= endOfDay) {
       return {};
     }
 
@@ -105,7 +126,7 @@ export default class PlannerConcept {
       tasks,
       busySlotsWithDates,
       planFrom,
-      endOfToday,
+      endOfDay,
     );
   }
 
@@ -127,25 +148,54 @@ export default class PlannerConcept {
     }));
 
     const now = this.timeProvider();
-    await this.scheduledTasks.deleteMany({
-      owner: user,
-      plannedStart: { $gte: now },
-    });
 
+    // Infer planning day from busy slots (same as planDay)
+    let planningDay = now;
+    if (busySlotsWithDates.length > 0) {
+      const firstSlotDate = busySlotsWithDates[0].start;
+      planningDay = firstSlotDate;
+    }
+
+    const startOfDay = new Date(
+      planningDay.getFullYear(),
+      planningDay.getMonth(),
+      planningDay.getDate(),
+      0,
+      0,
+      0,
+    );
     const endOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      planningDay.getFullYear(),
+      planningDay.getMonth(),
+      planningDay.getDate(),
       23,
       59,
       59,
     );
 
-    if (now >= endOfDay) {
+    // Delete ALL scheduled tasks for the user (to avoid timezone confusion)
+    console.log(`[Planner] Replan: Clearing ALL scheduled tasks for user`);
+    const deleteResult = await this.scheduledTasks.deleteMany({
+      owner: user,
+    });
+    console.log(
+      `[Planner] Deleted ${deleteResult.deletedCount} existing scheduled tasks`,
+    );
+
+    // Plan from now if it's within the planning day, otherwise from start of day
+    const planFrom = (now >= startOfDay && now < endOfDay) ? now : startOfDay;
+
+    if (planFrom >= endOfDay) {
       return {};
     }
 
-    return this._scheduleTasks(user, tasks, busySlotsWithDates, now, endOfDay);
+    return this._scheduleTasks(
+      user,
+      tasks,
+      busySlotsWithDates,
+      planFrom,
+      endOfDay,
+    );
   }
 
   /**
@@ -247,11 +297,22 @@ export default class PlannerConcept {
     planFrom: DateTime,
     planUntil: DateTime,
   ): Promise<{ firstTask?: Task }> {
+    console.log("[Planner] _scheduleTasks called");
+    console.log("[Planner] planFrom:", planFrom);
+    console.log("[Planner] planUntil:", planUntil);
+    console.log("[Planner] busySlots:", JSON.stringify(busySlots, null, 2));
+
     const availableSlots = this._getAvailableSlots(
       planFrom,
       planUntil,
       busySlots,
     );
+
+    console.log(
+      "[Planner] availableSlots:",
+      JSON.stringify(availableSlots, null, 2),
+    );
+
     const newScheduledTasks: ScheduledTask[] = [];
 
     for (const task of tasks) {
@@ -281,7 +342,12 @@ export default class PlannerConcept {
     }
 
     if (newScheduledTasks.length > 0) {
+      console.log(
+        `[Planner] Creating ${newScheduledTasks.length} new scheduled tasks`,
+      );
       await this.scheduledTasks.insertMany(newScheduledTasks);
+    } else {
+      console.log("[Planner] No tasks could be scheduled (no available slots)");
     }
 
     return {

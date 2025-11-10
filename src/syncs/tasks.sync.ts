@@ -1,5 +1,5 @@
 import { actions, Sync } from "@engine";
-import { Requesting, Sessioning, Tasks } from "@concepts";
+import { Focus, Planner, Requesting, Sessioning, Tasks } from "@concepts";
 
 /**
  * =============================================================================
@@ -103,7 +103,16 @@ export const CreateTaskError: Sync = ({ request, error }) => ({
 // --- UPDATE TASK ---
 
 export const UpdateTaskRequest: Sync = (
-  { request, session, user, task, newTitle, newDescription, newDueDate, newEstimatedDuration },
+  {
+    request,
+    session,
+    user,
+    task,
+    newTitle,
+    newDescription,
+    newDueDate,
+    newEstimatedDuration,
+  },
 ) => ({
   when: actions([
     Requesting.request,
@@ -178,7 +187,9 @@ export const ReorderTasksError: Sync = ({ request, error }) => ({
 
 // --- MARK TASK COMPLETE ---
 
-export const MarkTaskCompleteRequest: Sync = ({ request, session, user, task }) => ({
+export const MarkTaskCompleteRequest: Sync = (
+  { request, session, user, task },
+) => ({
   when: actions([
     Requesting.request,
     { path: "/Tasks/markTaskComplete", session, task },
@@ -203,6 +214,40 @@ export const MarkTaskCompleteError: Sync = ({ request, error }) => ({
     [Tasks.markTaskComplete, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
+});
+
+/**
+ * @sync MarkCompleteGetNextTask
+ * @when a task is marked complete
+ * @then get the next scheduled task from the planner
+ */
+export const MarkCompleteGetNextTask: Sync = (
+  { user, task, nextTask },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/Tasks/markTaskComplete", session: user },
+      {},
+    ],
+    [Tasks.markTaskComplete, { task }, {}],
+  ),
+  where: async (frames) =>
+    frames.query(Sessioning._getUser, { session: user }, { user }),
+  then: actions([Planner.getNextTask, { user, completedTask: task }]),
+});
+
+/**
+ * @sync MarkCompleteSetNextFocus
+ * @when we get the next task after marking one complete
+ * @then set that next task as the current focus
+ */
+export const MarkCompleteSetNextFocus: Sync = ({ user, nextTask }) => ({
+  when: actions(
+    [Tasks.markTaskComplete, {}, {}],
+    [Planner.getNextTask, { user }, { nextTask }],
+  ),
+  then: actions([Focus.setCurrentTask, { user, task: nextTask }]),
 });
 
 // --- DELETE TASK ---

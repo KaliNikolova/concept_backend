@@ -531,7 +531,6 @@ PS C:\Users\kalin\OneDrive - Massachusetts Institute of Technology\Uni\Senior\61
 
  
 
-
 #### Other changes:
 
 I added fields for the start and end of the working day to UserAccount:
@@ -571,3 +570,8 @@ I added fields for the start and end of the working day to UserAccount:
 	- Test for retrieving updated hours
 	
 	- Test for invalid time format validation
+
+
+
+#### Frontend changes:
+Some major frontend changes are that I moved the whole "Focus" functionality as a button within the "Day Plan" window. That way the user can make a schedule and then easily click "Focus" already having an idea of they day plan.

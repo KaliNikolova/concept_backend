@@ -252,7 +252,7 @@ export default class PlannerConcept {
       },
     );
 
-    return { nextTask: nextTask?.task };
+    return { nextTask: nextTask?.task ?? null };
   }
 
   /**
@@ -349,7 +349,7 @@ export default class PlannerConcept {
     return {
       firstTask: newScheduledTasks.length > 0
         ? newScheduledTasks[0].task
-        : undefined,
+        : null,
     };
   }
 

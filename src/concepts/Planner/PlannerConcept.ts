@@ -315,7 +315,15 @@ export default class PlannerConcept {
             plannedStart.getTime() + taskDurationMillis,
           );
 
-          // Don't schedule tasks that would end after the planning window
+          // Don't schedule tasks that would START after the planning window
+          if (plannedStart >= planUntil) {
+            console.log(
+              `[Planner] Skipping task ${task.id} - would start at ${plannedStart.toISOString()} (at or after planUntil ${planUntil.toISOString()})`,
+            );
+            break; // Can't fit this task or any larger ones in remaining slots
+          }
+
+          // Don't schedule tasks that would END after the planning window
           if (plannedEnd > planUntil) {
             console.log(
               `[Planner] Skipping task ${task.id} - would end at ${plannedEnd.toISOString()} (after planUntil ${planUntil.toISOString()})`,

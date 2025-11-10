@@ -196,8 +196,31 @@ export function startRequestingServer(
     "/*",
     cors({
       origin: REQUESTING_ALLOWED_DOMAIN,
+      credentials: true,
     }),
   );
+
+  /**
+   * ROOT ROUTE - Health check endpoint
+   */
+  app.get("/", (c) => {
+    return c.json({
+      status: "ok",
+      message: "Concept Server is running",
+      baseUrl: REQUESTING_BASE_URL,
+    });
+  });
+
+  /**
+   * API BASE ROUTE - Health check endpoint at API base path
+   */
+  app.get(REQUESTING_BASE_URL, (c) => {
+    return c.json({
+      status: "ok",
+      message: "API is ready",
+      availableConcepts: Object.keys(instances),
+    });
+  });
 
   /**
    * PASSTHROUGH ROUTES

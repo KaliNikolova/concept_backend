@@ -67,7 +67,7 @@ export default class PlannerConcept {
       tasks: TaskWithDuration[];
       busySlots: BusySlot[];
     },
-  ): Promise<{ firstTask?: Task } | { error: string }> {
+  ): Promise<{ firstTask?: Task | null } | { error: string }> {
     // Convert ISO strings to Date objects (in case they came from JSON)
     const busySlotsWithDates = busySlots.map((slot) => ({
       start: new Date(slot.start),
@@ -76,12 +76,10 @@ export default class PlannerConcept {
 
     // Plan for today only (from now until end of today)
     const now = this.timeProvider();
-    
+
     // Sort busy slots for processing
-    const sortedSlots = busySlotsWithDates.sort((a, b) => 
-      a.start.getTime() - b.start.getTime()
-    );
-    
+    busySlotsWithDates.sort((a, b) => a.start.getTime() - b.start.getTime());
+
     // Always use TODAY (server's current day) as the planning day
     // Do NOT extend into tomorrow even if busy slots exist tomorrow
     const endOfDay = new Date(
@@ -94,7 +92,9 @@ export default class PlannerConcept {
       999,
     );
 
-    console.log(`[Planner] Planning for today only: now (${now.toISOString()}) to end of day (${endOfDay.toISOString()})`);
+    console.log(
+      `[Planner] Planning for today only: now (${now.toISOString()}) to end of day (${endOfDay.toISOString()})`,
+    );
 
     // Clear ALL scheduled tasks for the user (to avoid timezone confusion)
     console.log(
@@ -133,7 +133,7 @@ export default class PlannerConcept {
       tasks: TaskWithDuration[];
       busySlots: BusySlot[];
     },
-  ): Promise<{ firstTask?: Task } | { error: string }> {
+  ): Promise<{ firstTask?: Task | null } | { error: string }> {
     // Convert ISO strings to Date objects (in case they came from JSON)
     const busySlotsWithDates = busySlots.map((slot) => ({
       start: new Date(slot.start),
@@ -143,10 +143,8 @@ export default class PlannerConcept {
     const now = this.timeProvider();
 
     // Sort busy slots for processing
-    const sortedSlots = busySlotsWithDates.sort((a, b) => 
-      a.start.getTime() - b.start.getTime()
-    );
-    
+    busySlotsWithDates.sort((a, b) => a.start.getTime() - b.start.getTime());
+
     // Always replan for TODAY only, not tomorrow
     const endOfDay = new Date(
       now.getFullYear(),
@@ -158,7 +156,9 @@ export default class PlannerConcept {
       999,
     );
 
-    console.log(`[Planner] Replan: Planning for today only until ${endOfDay.toISOString()}`);
+    console.log(
+      `[Planner] Replan: Planning for today only until ${endOfDay.toISOString()}`,
+    );
     console.log(`[Planner] Server now: ${now.toISOString()}`);
 
     // Delete ALL scheduled tasks for the user (same as planDay, avoids timezone bugs)
@@ -232,7 +232,7 @@ export default class PlannerConcept {
    */
   async getNextTask(
     { user, completedTask }: { user: User; completedTask: Task },
-  ): Promise<{ nextTask?: Task } | { error: string }> {
+  ): Promise<{ nextTask?: Task | null } | { error: string }> {
     const lastTask = await this.scheduledTasks.findOne({
       owner: user,
       task: completedTask,
@@ -284,7 +284,7 @@ export default class PlannerConcept {
     busySlots: BusySlot[],
     planFrom: DateTime,
     planUntil: DateTime,
-  ): Promise<{ firstTask?: Task }> {
+  ): Promise<{ firstTask?: Task | null }> {
     console.log("[Planner] _scheduleTasks called");
     console.log("[Planner] planFrom:", planFrom);
     console.log("[Planner] planUntil:", planUntil);
@@ -323,10 +323,10 @@ export default class PlannerConcept {
             break; // Can't fit this task or any larger ones in remaining slots
           }
 
-          // Don't schedule tasks that would END after the planning window
-          if (plannedEnd > planUntil) {
+          // Don't schedule tasks that would END at or after the planning window
+          if (plannedEnd >= planUntil) {
             console.log(
-              `[Planner] Skipping task ${task.id} - would end at ${plannedEnd.toISOString()} (after planUntil ${planUntil.toISOString()})`,
+              `[Planner] Skipping task ${task.id} - would end at ${plannedEnd.toISOString()} (at or after planUntil ${planUntil.toISOString()})`,
             );
             break; // Can't fit this task or any larger ones in remaining slots
           }

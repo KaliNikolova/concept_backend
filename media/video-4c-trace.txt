@@ -1,0 +1,1310 @@
+UserAccount.register { email: 'alex@mit.edu', password: 'alex123', displayName: 'Alex' } => { user: '019a792d-4193-7c59-a819-df3bdffd5e0d' }
+Tasks.createUserTasks { user: '019a792d-4193-7c59-a819-df3bdffd5e0d' } => {}
+
+[Requesting] Received request for path: /UserAccount/login
+Requesting.request {
+  email: 'alex@mit.edu',
+  password: 'alex123',
+  path: '/UserAccount/login'
+} => { request: '019a7948-5dae-7e46-8153-cfed6c644c3d' }
+UserAccount.login { email: 'alex@mit.edu', password: 'alex123' } => { user: '019a792d-4193-7c59-a819-df3bdffd5e0d' }
+Sessioning.create { user: '019a792d-4193-7c59-a819-df3bdffd5e0d' } => { session: '019a7948-6154-7996-a1d8-a6e2bec97e6b' }
+Requesting.respond {
+  request: '019a7948-5dae-7e46-8153-cfed6c644c3d',
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b'
+} => { request: '019a7948-5dae-7e46-8153-cfed6c644c3d' }
+[Requesting] Received request for path: /Tasks/_getTasks
+[Requesting] Received request for path: /UserAccount/_getUserProfile
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Tasks/_getTasks'
+} => { request: '019a7948-630e-7d9b-955c-2eb33473e441' }
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/UserAccount/_getUserProfile'
+} => { request: '019a7948-6323-7433-a085-fcd2e725aba8' }
+Requesting.respond {
+  request: '019a7948-6323-7433-a085-fcd2e725aba8',
+  profile: { displayName: 'Alex', email: 'alex@mit.edu' }
+} => { request: '019a7948-6323-7433-a085-fcd2e725aba8' }
+Requesting.respond {
+  request: '019a7948-630e-7d9b-955c-2eb33473e441',
+  tasks: [
+    {
+      _id: '019a793b-bdec-7df1-a768-f7864108b307',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Clean up 6.104 project 1 code repo',
+      description: '',
+      dueDate: '2025-11-14T02:00:00.000Z',
+      estimatedDuration: 30,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7935-e95d-7427-b625-358c14eaa9ff',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Essay Revision – Philosophy Paper',
+      description: 'Revise your paper on “The Paradox of Infinity” based on instructor feedback, improving clarity, transitions, and the conclusion.',
+      dueDate: '2025-11-13T23:00:00.000Z',
+      estimatedDuration: 150,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7937-9f97-76aa-ba34-7193024e7419',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Research Meeting Preparation',
+      description: 'Prepare slides summarizing the results of your recent diffusion model training and performance metrics. Include key visualizations for the Media Lab meeting.',
+      dueDate: '2025-11-17T15:00:00.000Z',
+      estimatedDuration: 120,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Email 6.191 TA',
+      description: 'Ask about grading criteria for the upcoming 6.191 project report.',
+      dueDate: '2025-11-13T17:00:00.000Z',
+      estimatedDuration: 15,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7938-ad24-7abd-8b07-e0e42c668bef',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Lab 8 – Statistical Data Analysis',
+      description: 'Implement hypothesis testing and confidence interval estimation in Python. Submit both the code notebook and a short report interpreting the results.',
+      dueDate: '2025-11-17T04:59:00.000Z',
+      estimatedDuration: 210,
+      status: 'TODO'
+    }
+  ]
+} => { request: '019a7948-630e-7d9b-955c-2eb33473e441' }
+[Requesting] Received request for path: /Tasks/reorderTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  newOrder: [
+    '019a7935-e95d-7427-b625-358c14eaa9ff',
+    '019a793b-bdec-7df1-a768-f7864108b307',
+    '019a7937-9f97-76aa-ba34-7193024e7419',
+    '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+    '019a7938-ad24-7abd-8b07-e0e42c668bef'
+  ],
+  path: '/Tasks/reorderTasks'
+} => { request: '019a7948-81e5-772d-98e9-a2be41fa9b56' }
+Tasks.reorderTasks {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  newOrder: [
+    '019a7935-e95d-7427-b625-358c14eaa9ff',
+    '019a793b-bdec-7df1-a768-f7864108b307',
+    '019a7937-9f97-76aa-ba34-7193024e7419',
+    '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+    '019a7938-ad24-7abd-8b07-e0e42c668bef'
+  ]
+} => {}
+Requesting.respond { request: '019a7948-81e5-772d-98e9-a2be41fa9b56', status: 'ok' } => { request: '019a7948-81e5-772d-98e9-a2be41fa9b56' }
+[Requesting] Received request for path: /Tasks/createTask
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  title: 'Finish 6.104 4c',
+  description: 'Finalize your submission for the personal project: \n' +
+    '- Write and polish your design and reflection documents (summarize final changes + insights). \n' +
+    '- Record and upload your short demo video showing the app’s main flow. \n' +
+    '- Check deployment (ensure the app runs properly at its public URL). \n' +
+    '- Fill out the Google form with commit hashes, app URL, and video link.',
+  dueDate: '2025-11-13T04:59:00.000Z',
+  estimatedDuration: 90,
+  path: '/Tasks/createTask'
+} => { request: '019a7948-f85e-7eff-adf1-a289c15aaf8a' }
+Tasks.createTask {
+  owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  title: 'Finish 6.104 4c',
+  description: 'Finalize your submission for the personal project: \n' +
+    '- Write and polish your design and reflection documents (summarize final changes + insights). \n' +
+    '- Record and upload your short demo video showing the app’s main flow. \n' +
+    '- Check deployment (ensure the app runs properly at its public URL). \n' +
+    '- Fill out the Google form with commit hashes, app URL, and video link.',
+  dueDate: '2025-11-13T04:59:00.000Z',
+  estimatedDuration: 90
+} => { task: '019a7948-f926-7c44-9e4f-443d0b517b4a' }
+Requesting.respond {
+  request: '019a7948-f85e-7eff-adf1-a289c15aaf8a',
+  task: '019a7948-f926-7c44-9e4f-443d0b517b4a'
+} => { request: '019a7948-f85e-7eff-adf1-a289c15aaf8a' }
+[Requesting] Received request for path: /Tasks/_getTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Tasks/_getTasks'
+} => { request: '019a7948-faee-7b77-a3f4-c9642f537cf2' }
+Requesting.respond {
+  request: '019a7948-faee-7b77-a3f4-c9642f537cf2',
+  tasks: [
+    {
+      _id: '019a7935-e95d-7427-b625-358c14eaa9ff',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Essay Revision – Philosophy Paper',
+      description: 'Revise your paper on “The Paradox of Infinity” based on instructor feedback, improving clarity, transitions, and the conclusion.',
+      dueDate: '2025-11-13T23:00:00.000Z',
+      estimatedDuration: 150,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-bdec-7df1-a768-f7864108b307',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Clean up 6.104 project 1 code repo',
+      description: '',
+      dueDate: '2025-11-14T02:00:00.000Z',
+      estimatedDuration: 30,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7937-9f97-76aa-ba34-7193024e7419',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Research Meeting Preparation',
+      description: 'Prepare slides summarizing the results of your recent diffusion model training and performance metrics. Include key visualizations for the Media Lab meeting.',
+      dueDate: '2025-11-17T15:00:00.000Z',
+      estimatedDuration: 120,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Email 6.191 TA',
+      description: 'Ask about grading criteria for the upcoming 6.191 project report.',
+      dueDate: '2025-11-13T17:00:00.000Z',
+      estimatedDuration: 15,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7938-ad24-7abd-8b07-e0e42c668bef',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Lab 8 – Statistical Data Analysis',
+      description: 'Implement hypothesis testing and confidence interval estimation in Python. Submit both the code notebook and a short report interpreting the results.',
+      dueDate: '2025-11-17T04:59:00.000Z',
+      estimatedDuration: 210,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7948-f926-7c44-9e4f-443d0b517b4a',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Finish 6.104 4c',
+      description: 'Finalize your submission for the personal project: \n' +
+        '- Write and polish your design and reflection documents (summarize final changes + insights). \n' +
+        '- Record and upload your short demo video showing the app’s main flow. \n' +
+        '- Check deployment (ensure the app runs properly at its public URL). \n' +
+        '- Fill out the Google form with commit hashes, app URL, and video link.',
+      dueDate: '2025-11-13T04:59:00.000Z',
+      estimatedDuration: 90,
+      status: 'TODO'
+    }
+  ]
+} => { request: '019a7948-faee-7b77-a3f4-c9642f537cf2' }
+[Requesting] Received request for path: /Tasks/reorderTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  newOrder: [
+    '019a7948-f926-7c44-9e4f-443d0b517b4a',
+    '019a7935-e95d-7427-b625-358c14eaa9ff',
+    '019a793b-bdec-7df1-a768-f7864108b307',
+    '019a7937-9f97-76aa-ba34-7193024e7419',
+    '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+    '019a7938-ad24-7abd-8b07-e0e42c668bef'
+  ],
+  path: '/Tasks/reorderTasks'
+} => { request: '019a7949-27ab-7416-a911-281266fefb29' }
+Tasks.reorderTasks {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  newOrder: [
+    '019a7948-f926-7c44-9e4f-443d0b517b4a',
+    '019a7935-e95d-7427-b625-358c14eaa9ff',
+    '019a793b-bdec-7df1-a768-f7864108b307',
+    '019a7937-9f97-76aa-ba34-7193024e7419',
+    '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+    '019a7938-ad24-7abd-8b07-e0e42c668bef'
+  ]
+} => {}
+Requesting.respond { request: '019a7949-27ab-7416-a911-281266fefb29', status: 'ok' } => { request: '019a7949-27ab-7416-a911-281266fefb29' }
+[Requesting] Received request for path: /UserAccount/_getWorkingHours
+[Requesting] Received request for path: /UserAccount/_getUserProfile
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/UserAccount/_getWorkingHours'
+} => { request: '019a7949-36a3-7def-a4a6-60dbc2c325ea' }
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/UserAccount/_getUserProfile'
+} => { request: '019a7949-36ae-7487-99dc-acfae86f9457' }
+Requesting.respond {
+  request: '019a7949-36a3-7def-a4a6-60dbc2c325ea',
+  workingHours: { start: '09:00', end: '19:00' }
+} => { request: '019a7949-36a3-7def-a4a6-60dbc2c325ea' }
+Requesting.respond {
+  request: '019a7949-36ae-7487-99dc-acfae86f9457',
+  profile: { displayName: 'Alex', email: 'alex@mit.edu' }
+} => { request: '019a7949-36ae-7487-99dc-acfae86f9457' }
+[Requesting] Received request for path: /Schedule/_getSlots
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Schedule/_getSlots'
+} => { request: '019a7949-38a8-76dd-9b18-4633895992b6' }
+Requesting.respond {
+  request: '019a7949-38a8-76dd-9b18-4633895992b6',
+  slots: [
+    {
+      _id: '019a793e-53a5-7573-9485-9fab4280671b',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T14:00:00.000Z',
+      endTime: '2025-11-12T15:00:00.000Z',
+      description: 'Breakfast',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793e-b334-7622-bf77-607413256d72',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T17:00:00.000Z',
+      endTime: '2025-11-12T18:00:00.000Z',
+      description: 'Lunch',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793f-2148-7114-b018-ffae6f8918a1',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-13T00:00:00.000Z',
+      endTime: '2025-11-13T01:00:00.000Z',
+      description: 'Dinner',
+      origin: 'MANUAL'
+    }
+  ]
+} => { request: '019a7949-38a8-76dd-9b18-4633895992b6' }
+[Requesting] Received request for path: /Schedule/_getSlots
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Schedule/_getSlots'
+} => { request: '019a7949-45a3-7ac0-a14f-52c480c6fd3b' }
+Requesting.respond {
+  request: '019a7949-45a3-7ac0-a14f-52c480c6fd3b',
+  slots: [
+    {
+      _id: '019a793e-53a5-7573-9485-9fab4280671b',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T14:00:00.000Z',
+      endTime: '2025-11-12T15:00:00.000Z',
+      description: 'Breakfast',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793e-b334-7622-bf77-607413256d72',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T17:00:00.000Z',
+      endTime: '2025-11-12T18:00:00.000Z',
+      description: 'Lunch',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793f-2148-7114-b018-ffae6f8918a1',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-13T00:00:00.000Z',
+      endTime: '2025-11-13T01:00:00.000Z',
+      description: 'Dinner',
+      origin: 'MANUAL'
+    }
+  ]
+} => { request: '019a7949-45a3-7ac0-a14f-52c480c6fd3b' }
+[Requesting] Received request for path: /Planner/planDay
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  tasks: [
+    { id: '019a7948-f926-7c44-9e4f-443d0b517b4a', duration: 90 },
+    { id: '019a7935-e95d-7427-b625-358c14eaa9ff', duration: 150 },
+    { id: '019a793b-bdec-7df1-a768-f7864108b307', duration: 30 },
+    { id: '019a7937-9f97-76aa-ba34-7193024e7419', duration: 120 },
+    { id: '019a793b-0ae3-728f-8cd2-0f3de1bae713', duration: 15 },
+    { id: '019a7938-ad24-7abd-8b07-e0e42c668bef', duration: 210 }
+  ],
+  busySlots: [
+    {
+      start: '2025-11-12T14:00:00.000Z',
+      end: '2025-11-12T15:00:00.000Z'
+    },
+    {
+      start: '2025-11-12T17:00:00.000Z',
+      end: '2025-11-12T18:00:00.000Z'
+    },
+    {
+      start: '2025-11-13T00:00:00.000Z',
+      end: '2025-11-13T01:00:00.000Z'
+    },
+    {
+      start: '2025-11-12T05:00:00.000Z',
+      end: '2025-11-12T14:00:00.000Z'
+    },
+    {
+      start: '2025-11-13T00:00:00.000Z',
+      end: '2025-11-13T04:59:59.999Z'
+    }
+  ],
+  planningDate: '2025-11-12T05:00:00.000Z',
+  path: '/Planner/planDay'
+} => { request: '019a7949-47c4-7dce-87f7-0b12b9c2d426' }
+[Planner] Planning for today only: now (2025-11-12T18:17:17.131Z) to end of day (2025-11-12T23:59:59.999Z)
+[Planner] Clearing ALL scheduled tasks for user before planning
+[Planner] Deleted 4 existing scheduled tasks
+[Planner] _scheduleTasks called
+[Planner] planFrom: 2025-11-12T18:17:17.131Z
+[Planner] planUntil: 2025-11-12T23:59:59.999Z
+[Planner] busySlots: [
+  {
+    "start": "2025-11-12T05:00:00.000Z",
+    "end": "2025-11-12T14:00:00.000Z"
+  },
+  {
+    "start": "2025-11-12T14:00:00.000Z",
+    "end": "2025-11-12T15:00:00.000Z"
+  },
+  {
+    "start": "2025-11-12T17:00:00.000Z",
+    "end": "2025-11-12T18:00:00.000Z"
+  },
+  {
+    "start": "2025-11-13T00:00:00.000Z",
+    "end": "2025-11-13T01:00:00.000Z"
+  },
+  {
+    "start": "2025-11-13T00:00:00.000Z",
+    "end": "2025-11-13T04:59:59.999Z"
+  }
+]
+[Planner] availableSlots: [
+  {
+    "start": "2025-11-12T18:17:17.131Z",
+    "end": "2025-11-13T00:00:00.000Z"
+  }
+]
+[Planner] Creating 4 new scheduled tasks
+Planner.planDay {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  tasks: [
+    { id: '019a7948-f926-7c44-9e4f-443d0b517b4a', duration: 90 },
+    { id: '019a7935-e95d-7427-b625-358c14eaa9ff', duration: 150 },
+    { id: '019a793b-bdec-7df1-a768-f7864108b307', duration: 30 },
+    { id: '019a7937-9f97-76aa-ba34-7193024e7419', duration: 120 },
+    { id: '019a793b-0ae3-728f-8cd2-0f3de1bae713', duration: 15 },
+    { id: '019a7938-ad24-7abd-8b07-e0e42c668bef', duration: 210 }
+  ],
+  busySlots: [
+    {
+      start: '2025-11-12T14:00:00.000Z',
+      end: '2025-11-12T15:00:00.000Z'
+    },
+    {
+      start: '2025-11-12T17:00:00.000Z',
+      end: '2025-11-12T18:00:00.000Z'
+    },
+    {
+      start: '2025-11-13T00:00:00.000Z',
+      end: '2025-11-13T01:00:00.000Z'
+    },
+    {
+      start: '2025-11-12T05:00:00.000Z',
+      end: '2025-11-12T14:00:00.000Z'
+    },
+    {
+      start: '2025-11-13T00:00:00.000Z',
+      end: '2025-11-13T04:59:59.999Z'
+    }
+  ]
+} => { firstTask: '019a7948-f926-7c44-9e4f-443d0b517b4a' }
+Requesting.respond {
+  request: '019a7949-47c4-7dce-87f7-0b12b9c2d426',
+  firstTask: '019a7948-f926-7c44-9e4f-443d0b517b4a'
+} => { request: '019a7949-47c4-7dce-87f7-0b12b9c2d426' }
+Focus.setCurrentTask {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  task: '019a7948-f926-7c44-9e4f-443d0b517b4a'
+} => {}
+[Requesting] Received request for path: /Planner/_getScheduledTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Planner/_getScheduledTasks'
+} => { request: '019a7949-4a62-7418-a422-7a145e7a19d8' }
+Requesting.respond {
+  request: '019a7949-4a62-7418-a422-7a145e7a19d8',
+  tasks: [
+    {
+      _id: '019a7949-488f-7782-82e6-147267a3f67f',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      task: '019a7948-f926-7c44-9e4f-443d0b517b4a',
+      plannedStart: 2025-11-12T18:17:17.131Z,
+      plannedEnd: 2025-11-12T19:47:17.131Z
+    },
+    {
+      _id: '019a7949-4890-74bd-9632-a9658717adeb',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      task: '019a7935-e95d-7427-b625-358c14eaa9ff',
+      plannedStart: 2025-11-12T19:47:17.131Z,
+      plannedEnd: 2025-11-12T22:17:17.131Z
+    },
+    {
+      _id: '019a7949-4890-7b4b-9416-0c1f0f82ec53',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      task: '019a793b-bdec-7df1-a768-f7864108b307',
+      plannedStart: 2025-11-12T22:17:17.131Z,
+      plannedEnd: 2025-11-12T22:47:17.131Z
+    },
+    {
+      _id: '019a7949-4890-7167-8d6a-a2e74e08d85d',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      task: '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+      plannedStart: 2025-11-12T22:47:17.131Z,
+      plannedEnd: 2025-11-12T23:02:17.131Z
+    }
+  ]
+} => { request: '019a7949-4a62-7418-a422-7a145e7a19d8' }
+[Requesting] Received request for path: /Schedule/_getSlots
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Schedule/_getSlots'
+} => { request: '019a7949-4bf4-7699-9d17-45930e9c1566' }
+Requesting.respond {
+  request: '019a7949-4bf4-7699-9d17-45930e9c1566',
+  slots: [
+    {
+      _id: '019a793e-53a5-7573-9485-9fab4280671b',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T14:00:00.000Z',
+      endTime: '2025-11-12T15:00:00.000Z',
+      description: 'Breakfast',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793e-b334-7622-bf77-607413256d72',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T17:00:00.000Z',
+      endTime: '2025-11-12T18:00:00.000Z',
+      description: 'Lunch',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793f-2148-7114-b018-ffae6f8918a1',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-13T00:00:00.000Z',
+      endTime: '2025-11-13T01:00:00.000Z',
+      description: 'Dinner',
+      origin: 'MANUAL'
+    }
+  ]
+} => { request: '019a7949-4bf4-7699-9d17-45930e9c1566' }
+[Requesting] Received request for path: /Schedule/blockTime
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  startTime: '2025-11-12T20:30:00.000Z',
+  endTime: '2025-11-12T21:15:00.000Z',
+  description: 'Meeting',
+  path: '/Schedule/blockTime'
+} => { request: '019a7949-ceb5-7854-b233-d2a52d021a5b' }
+Schedule.blockTime {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  startTime: '2025-11-12T20:30:00.000Z',
+  endTime: '2025-11-12T21:15:00.000Z',
+  description: 'Meeting'
+} => { slot: '019a7949-cf3b-70da-82eb-a02bac76d888' }
+Requesting.respond {
+  request: '019a7949-ceb5-7854-b233-d2a52d021a5b',
+  slot: '019a7949-cf3b-70da-82eb-a02bac76d888'
+} => { request: '019a7949-ceb5-7854-b233-d2a52d021a5b' }
+[Requesting] Received request for path: /Schedule/_getSlots
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Schedule/_getSlots'
+} => { request: '019a7949-d166-74ff-80a0-b439cded15a5' }
+Requesting.respond {
+  request: '019a7949-d166-74ff-80a0-b439cded15a5',
+  slots: [
+    {
+      _id: '019a793e-53a5-7573-9485-9fab4280671b',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T14:00:00.000Z',
+      endTime: '2025-11-12T15:00:00.000Z',
+      description: 'Breakfast',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793e-b334-7622-bf77-607413256d72',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T17:00:00.000Z',
+      endTime: '2025-11-12T18:00:00.000Z',
+      description: 'Lunch',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793f-2148-7114-b018-ffae6f8918a1',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-13T00:00:00.000Z',
+      endTime: '2025-11-13T01:00:00.000Z',
+      description: 'Dinner',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a7949-cf3b-70da-82eb-a02bac76d888',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T20:30:00.000Z',
+      endTime: '2025-11-12T21:15:00.000Z',
+      description: 'Meeting',
+      origin: 'MANUAL'
+    }
+  ]
+} => { request: '019a7949-d166-74ff-80a0-b439cded15a5' }
+[Requesting] Received request for path: /Schedule/_getSlots
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Schedule/_getSlots'
+} => { request: '019a7949-e2b1-7309-a80c-c5f51404165b' }
+Requesting.respond {
+  request: '019a7949-e2b1-7309-a80c-c5f51404165b',
+  slots: [
+    {
+      _id: '019a793e-53a5-7573-9485-9fab4280671b',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T14:00:00.000Z',
+      endTime: '2025-11-12T15:00:00.000Z',
+      description: 'Breakfast',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793e-b334-7622-bf77-607413256d72',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T17:00:00.000Z',
+      endTime: '2025-11-12T18:00:00.000Z',
+      description: 'Lunch',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793f-2148-7114-b018-ffae6f8918a1',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-13T00:00:00.000Z',
+      endTime: '2025-11-13T01:00:00.000Z',
+      description: 'Dinner',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a7949-cf3b-70da-82eb-a02bac76d888',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T20:30:00.000Z',
+      endTime: '2025-11-12T21:15:00.000Z',
+      description: 'Meeting',
+      origin: 'MANUAL'
+    }
+  ]
+} => { request: '019a7949-e2b1-7309-a80c-c5f51404165b' }
+[Requesting] Received request for path: /Planner/replan
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  tasks: [
+    { id: '019a7948-f926-7c44-9e4f-443d0b517b4a', duration: 90 },
+    { id: '019a7935-e95d-7427-b625-358c14eaa9ff', duration: 150 },
+    { id: '019a793b-bdec-7df1-a768-f7864108b307', duration: 30 },
+    { id: '019a7937-9f97-76aa-ba34-7193024e7419', duration: 120 },
+    { id: '019a793b-0ae3-728f-8cd2-0f3de1bae713', duration: 15 },
+    { id: '019a7938-ad24-7abd-8b07-e0e42c668bef', duration: 210 }
+  ],
+  busySlots: [
+    {
+      start: '2025-11-12T14:00:00.000Z',
+      end: '2025-11-12T15:00:00.000Z'
+    },
+    {
+      start: '2025-11-12T17:00:00.000Z',
+      end: '2025-11-12T18:00:00.000Z'
+    },
+    {
+      start: '2025-11-13T00:00:00.000Z',
+      end: '2025-11-13T01:00:00.000Z'
+    },
+    {
+      start: '2025-11-12T20:30:00.000Z',
+      end: '2025-11-12T21:15:00.000Z'
+    },
+    {
+      start: '2025-11-12T05:00:00.000Z',
+      end: '2025-11-12T14:00:00.000Z'
+    },
+    {
+      start: '2025-11-13T00:00:00.000Z',
+      end: '2025-11-13T04:59:59.999Z'
+    }
+  ],
+  planningDate: '2025-11-12T05:00:00.000Z',
+  path: '/Planner/replan'
+} => { request: '019a7949-e505-7457-b764-f24b61e84b0e' }
+[Planner] Replan: Planning for today only until 2025-11-12T23:59:59.999Z
+[Planner] Server now: 2025-11-12T18:17:57.387Z
+[Planner] Replan: Clearing ALL scheduled tasks for user
+[Planner] Deleted 4 scheduled tasks
+[Planner] _scheduleTasks called
+[Planner] planFrom: 2025-11-12T18:17:57.387Z
+[Planner] planUntil: 2025-11-12T23:59:59.999Z
+[Planner] busySlots: [
+  {
+    "start": "2025-11-12T05:00:00.000Z",
+    "end": "2025-11-12T14:00:00.000Z"
+  },
+  {
+    "start": "2025-11-12T14:00:00.000Z",
+    "end": "2025-11-12T15:00:00.000Z"
+  },
+  {
+    "start": "2025-11-12T17:00:00.000Z",
+    "end": "2025-11-12T18:00:00.000Z"
+  },
+  {
+    "start": "2025-11-12T20:30:00.000Z",
+    "end": "2025-11-12T21:15:00.000Z"
+  },
+  {
+    "start": "2025-11-13T00:00:00.000Z",
+    "end": "2025-11-13T01:00:00.000Z"
+  },
+  {
+    "start": "2025-11-13T00:00:00.000Z",
+    "end": "2025-11-13T04:59:59.999Z"
+  }
+]
+[Planner] availableSlots: [
+  {
+    "start": "2025-11-12T18:17:57.387Z",
+    "end": "2025-11-12T20:30:00.000Z"
+  },
+  {
+    "start": "2025-11-12T21:15:00.000Z",
+    "end": "2025-11-13T00:00:00.000Z"
+  }
+]
+[Planner] Skipping task 019a793b-0ae3-728f-8cd2-0f3de1bae713 - would end at 2025-11-13T00:00:00.000Z (at or after planUntil 2025-11-12T23:59:59.999Z)
+[Planner] Creating 3 new scheduled tasks
+Planner.replan {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  tasks: [
+    { id: '019a7948-f926-7c44-9e4f-443d0b517b4a', duration: 90 },
+    { id: '019a7935-e95d-7427-b625-358c14eaa9ff', duration: 150 },
+    { id: '019a793b-bdec-7df1-a768-f7864108b307', duration: 30 },
+    { id: '019a7937-9f97-76aa-ba34-7193024e7419', duration: 120 },
+    { id: '019a793b-0ae3-728f-8cd2-0f3de1bae713', duration: 15 },
+    { id: '019a7938-ad24-7abd-8b07-e0e42c668bef', duration: 210 }
+  ],
+  busySlots: [
+    {
+      start: '2025-11-12T14:00:00.000Z',
+      end: '2025-11-12T15:00:00.000Z'
+    },
+    {
+      start: '2025-11-12T17:00:00.000Z',
+      end: '2025-11-12T18:00:00.000Z'
+    },
+    {
+      start: '2025-11-13T00:00:00.000Z',
+      end: '2025-11-13T01:00:00.000Z'
+    },
+    {
+      start: '2025-11-12T20:30:00.000Z',
+      end: '2025-11-12T21:15:00.000Z'
+    },
+    {
+      start: '2025-11-12T05:00:00.000Z',
+      end: '2025-11-12T14:00:00.000Z'
+    },
+    {
+      start: '2025-11-13T00:00:00.000Z',
+      end: '2025-11-13T04:59:59.999Z'
+    }
+  ]
+} => { firstTask: '019a7948-f926-7c44-9e4f-443d0b517b4a' }
+Requesting.respond {
+  request: '019a7949-e505-7457-b764-f24b61e84b0e',
+  firstTask: '019a7948-f926-7c44-9e4f-443d0b517b4a'
+} => { request: '019a7949-e505-7457-b764-f24b61e84b0e' }
+Focus.setCurrentTask {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  task: '019a7948-f926-7c44-9e4f-443d0b517b4a'
+} => {}
+[Requesting] Received request for path: /Planner/_getScheduledTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Planner/_getScheduledTasks'
+} => { request: '019a7949-e7e1-76dc-a255-dd9f4f32b7ec' }
+Requesting.respond {
+  request: '019a7949-e7e1-76dc-a255-dd9f4f32b7ec',
+  tasks: [
+    {
+      _id: '019a7949-e5cf-7074-9ce6-a5d2c1a97392',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      task: '019a7948-f926-7c44-9e4f-443d0b517b4a',
+      plannedStart: 2025-11-12T18:17:57.387Z,
+      plannedEnd: 2025-11-12T19:47:57.387Z
+    },
+    {
+      _id: '019a7949-e5cf-77d9-9f7f-76486481f3ca',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      task: '019a793b-bdec-7df1-a768-f7864108b307',
+      plannedStart: 2025-11-12T19:47:57.387Z,
+      plannedEnd: 2025-11-12T20:17:57.387Z
+    },
+    {
+      _id: '019a7949-e5cf-705d-87f8-bfa5361dc6bf',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      task: '019a7935-e95d-7427-b625-358c14eaa9ff',
+      plannedStart: 2025-11-12T21:15:00.000Z,
+      plannedEnd: 2025-11-12T23:45:00.000Z
+    }
+  ]
+} => { request: '019a7949-e7e1-76dc-a255-dd9f4f32b7ec' }
+[Requesting] Received request for path: /Schedule/_getSlots
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Schedule/_getSlots'
+} => { request: '019a7949-ea00-75a6-a187-8ce0058cf650' }
+Requesting.respond {
+  request: '019a7949-ea00-75a6-a187-8ce0058cf650',
+  slots: [
+    {
+      _id: '019a793e-53a5-7573-9485-9fab4280671b',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T14:00:00.000Z',
+      endTime: '2025-11-12T15:00:00.000Z',
+      description: 'Breakfast',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793e-b334-7622-bf77-607413256d72',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T17:00:00.000Z',
+      endTime: '2025-11-12T18:00:00.000Z',
+      description: 'Lunch',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793f-2148-7114-b018-ffae6f8918a1',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-13T00:00:00.000Z',
+      endTime: '2025-11-13T01:00:00.000Z',
+      description: 'Dinner',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a7949-cf3b-70da-82eb-a02bac76d888',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T20:30:00.000Z',
+      endTime: '2025-11-12T21:15:00.000Z',
+      description: 'Meeting',
+      origin: 'MANUAL'
+    }
+  ]
+} => { request: '019a7949-ea00-75a6-a187-8ce0058cf650' }
+[Requesting] Received request for path: /Focus/_getCurrentTask
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Focus/_getCurrentTask'
+} => { request: '019a794a-0c35-7fac-a54f-d56730a99b7b' }
+Requesting.respond {
+  request: '019a794a-0c35-7fac-a54f-d56730a99b7b',
+  task: '019a7948-f926-7c44-9e4f-443d0b517b4a'
+} => { request: '019a794a-0c35-7fac-a54f-d56730a99b7b' }
+[Requesting] Received request for path: /Tasks/markTaskComplete
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  task: '019a7948-f926-7c44-9e4f-443d0b517b4a',
+  path: '/Tasks/markTaskComplete'
+} => { request: '019a794a-2546-79dd-9599-18741b7a0dda' }
+Tasks.markTaskComplete { task: '019a7948-f926-7c44-9e4f-443d0b517b4a' } => {}
+Planner.getNextTask {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  completedTask: '019a7948-f926-7c44-9e4f-443d0b517b4a'
+} => { nextTask: '019a793b-bdec-7df1-a768-f7864108b307' }
+Focus.setCurrentTask {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  task: '019a793b-bdec-7df1-a768-f7864108b307'
+} => {}
+Requesting.respond { request: '019a794a-2546-79dd-9599-18741b7a0dda', status: 'ok' } => { request: '019a794a-2546-79dd-9599-18741b7a0dda' }
+[Requesting] Received request for path: /Tasks/_getTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Tasks/_getTasks'
+} => { request: '019a794a-2882-7a4a-b8b7-f35df92798f4' }
+Requesting.respond {
+  request: '019a794a-2882-7a4a-b8b7-f35df92798f4',
+  tasks: [
+    {
+      _id: '019a7948-f926-7c44-9e4f-443d0b517b4a',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Finish 6.104 4c',
+      description: 'Finalize your submission for the personal project: \n' +
+        '- Write and polish your design and reflection documents (summarize final changes + insights). \n' +
+        '- Record and upload your short demo video showing the app’s main flow. \n' +
+        '- Check deployment (ensure the app runs properly at its public URL). \n' +
+        '- Fill out the Google form with commit hashes, app URL, and video link.',
+      dueDate: '2025-11-13T04:59:00.000Z',
+      estimatedDuration: 90,
+      status: 'DONE'
+    },
+    {
+      _id: '019a7935-e95d-7427-b625-358c14eaa9ff',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Essay Revision – Philosophy Paper',
+      description: 'Revise your paper on “The Paradox of Infinity” based on instructor feedback, improving clarity, transitions, and the conclusion.',
+      dueDate: '2025-11-13T23:00:00.000Z',
+      estimatedDuration: 150,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-bdec-7df1-a768-f7864108b307',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Clean up 6.104 project 1 code repo',
+      description: '',
+      dueDate: '2025-11-14T02:00:00.000Z',
+      estimatedDuration: 30,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7937-9f97-76aa-ba34-7193024e7419',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Research Meeting Preparation',
+      description: 'Prepare slides summarizing the results of your recent diffusion model training and performance metrics. Include key visualizations for the Media Lab meeting.',
+      dueDate: '2025-11-17T15:00:00.000Z',
+      estimatedDuration: 120,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Email 6.191 TA',
+      description: 'Ask about grading criteria for the upcoming 6.191 project report.',
+      dueDate: '2025-11-13T17:00:00.000Z',
+      estimatedDuration: 15,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7938-ad24-7abd-8b07-e0e42c668bef',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Lab 8 – Statistical Data Analysis',
+      description: 'Implement hypothesis testing and confidence interval estimation in Python. Submit both the code notebook and a short report interpreting the results.',
+      dueDate: '2025-11-17T04:59:00.000Z',
+      estimatedDuration: 210,
+      status: 'TODO'
+    }
+  ]
+} => { request: '019a794a-2882-7a4a-b8b7-f35df92798f4' }
+[Requesting] Received request for path: /Focus/_getCurrentTask
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Focus/_getCurrentTask'
+} => { request: '019a794a-2ae8-78ac-b362-4b552fd6fbe4' }
+Requesting.respond {
+  request: '019a794a-2ae8-78ac-b362-4b552fd6fbe4',
+  task: '019a793b-bdec-7df1-a768-f7864108b307'
+} => { request: '019a794a-2ae8-78ac-b362-4b552fd6fbe4' }
+[Requesting] Received request for path: /Focus/_getCurrentTask
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Focus/_getCurrentTask'
+} => { request: '019a794a-3431-7002-8e44-a5d65a7fa600' }
+Requesting.respond {
+  request: '019a794a-3431-7002-8e44-a5d65a7fa600',
+  task: '019a793b-bdec-7df1-a768-f7864108b307'
+} => { request: '019a794a-3431-7002-8e44-a5d65a7fa600' }
+[Requesting] Received request for path: /Tasks/markTaskComplete
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  task: '019a793b-bdec-7df1-a768-f7864108b307',
+  path: '/Tasks/markTaskComplete'
+} => { request: '019a794a-4498-7e1d-a594-f93fec5d6e5a' }
+Tasks.markTaskComplete { task: '019a793b-bdec-7df1-a768-f7864108b307' } => {}
+Planner.getNextTask {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  completedTask: '019a793b-bdec-7df1-a768-f7864108b307'
+} => { nextTask: '019a7935-e95d-7427-b625-358c14eaa9ff' }
+Focus.setCurrentTask {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  task: '019a7935-e95d-7427-b625-358c14eaa9ff'
+} => {}
+Requesting.respond { request: '019a794a-4498-7e1d-a594-f93fec5d6e5a', status: 'ok' } => { request: '019a794a-4498-7e1d-a594-f93fec5d6e5a' }
+[Requesting] Received request for path: /Tasks/_getTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Tasks/_getTasks'
+} => { request: '019a794a-47ec-71ec-a524-fc91c85d6110' }
+Requesting.respond {
+  request: '019a794a-47ec-71ec-a524-fc91c85d6110',
+  tasks: [
+    {
+      _id: '019a7948-f926-7c44-9e4f-443d0b517b4a',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Finish 6.104 4c',
+      description: 'Finalize your submission for the personal project: \n' +
+        '- Write and polish your design and reflection documents (summarize final changes + insights). \n' +
+        '- Record and upload your short demo video showing the app’s main flow. \n' +
+        '- Check deployment (ensure the app runs properly at its public URL). \n' +
+        '- Fill out the Google form with commit hashes, app URL, and video link.',
+      dueDate: '2025-11-13T04:59:00.000Z',
+      estimatedDuration: 90,
+      status: 'DONE'
+    },
+    {
+      _id: '019a7935-e95d-7427-b625-358c14eaa9ff',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Essay Revision – Philosophy Paper',
+      description: 'Revise your paper on “The Paradox of Infinity” based on instructor feedback, improving clarity, transitions, and the conclusion.',
+      dueDate: '2025-11-13T23:00:00.000Z',
+      estimatedDuration: 150,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-bdec-7df1-a768-f7864108b307',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Clean up 6.104 project 1 code repo',
+      description: '',
+      dueDate: '2025-11-14T02:00:00.000Z',
+      estimatedDuration: 30,
+      status: 'DONE'
+    },
+    {
+      _id: '019a7937-9f97-76aa-ba34-7193024e7419',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Research Meeting Preparation',
+      description: 'Prepare slides summarizing the results of your recent diffusion model training and performance metrics. Include key visualizations for the Media Lab meeting.',
+      dueDate: '2025-11-17T15:00:00.000Z',
+      estimatedDuration: 120,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Email 6.191 TA',
+      description: 'Ask about grading criteria for the upcoming 6.191 project report.',
+      dueDate: '2025-11-13T17:00:00.000Z',
+      estimatedDuration: 15,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7938-ad24-7abd-8b07-e0e42c668bef',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Lab 8 – Statistical Data Analysis',
+      description: 'Implement hypothesis testing and confidence interval estimation in Python. Submit both the code notebook and a short report interpreting the results.',
+      dueDate: '2025-11-17T04:59:00.000Z',
+      estimatedDuration: 210,
+      status: 'TODO'
+    }
+  ]
+} => { request: '019a794a-47ec-71ec-a524-fc91c85d6110' }
+[Requesting] Received request for path: /Focus/_getCurrentTask
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Focus/_getCurrentTask'
+} => { request: '019a794a-4a81-791e-ad86-e0b02fbe7f93' }
+Requesting.respond {
+  request: '019a794a-4a81-791e-ad86-e0b02fbe7f93',
+  task: '019a7935-e95d-7427-b625-358c14eaa9ff'
+} => { request: '019a794a-4a81-791e-ad86-e0b02fbe7f93' }
+[Requesting] Received request for path: /Focus/_getCurrentTask
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Focus/_getCurrentTask'
+} => { request: '019a794a-6048-7cab-b44c-e5b7037f4234' }
+Requesting.respond {
+  request: '019a794a-6048-7cab-b44c-e5b7037f4234',
+  task: '019a7935-e95d-7427-b625-358c14eaa9ff'
+} => { request: '019a794a-6048-7cab-b44c-e5b7037f4234' }
+[Requesting] Received request for path: /Tasks/markTaskComplete
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  task: '019a7935-e95d-7427-b625-358c14eaa9ff',
+  path: '/Tasks/markTaskComplete'
+} => { request: '019a794a-74f6-72a2-8ef4-5f4ceb10ceb1' }
+Tasks.markTaskComplete { task: '019a7935-e95d-7427-b625-358c14eaa9ff' } => {}
+Planner.getNextTask {
+  user: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+  completedTask: '019a7935-e95d-7427-b625-358c14eaa9ff'
+} => { nextTask: null }
+Focus.setCurrentTask { user: '019a792d-4193-7c59-a819-df3bdffd5e0d', task: null } => {}
+Requesting.respond { request: '019a794a-74f6-72a2-8ef4-5f4ceb10ceb1', status: 'ok' } => { request: '019a794a-74f6-72a2-8ef4-5f4ceb10ceb1' }
+[Requesting] Received request for path: /Tasks/_getTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Tasks/_getTasks'
+} => { request: '019a794a-780e-7754-a040-432c38a7a286' }
+Requesting.respond {
+  request: '019a794a-780e-7754-a040-432c38a7a286',
+  tasks: [
+    {
+      _id: '019a7948-f926-7c44-9e4f-443d0b517b4a',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Finish 6.104 4c',
+      description: 'Finalize your submission for the personal project: \n' +
+        '- Write and polish your design and reflection documents (summarize final changes + insights). \n' +
+        '- Record and upload your short demo video showing the app’s main flow. \n' +
+        '- Check deployment (ensure the app runs properly at its public URL). \n' +
+        '- Fill out the Google form with commit hashes, app URL, and video link.',
+      dueDate: '2025-11-13T04:59:00.000Z',
+      estimatedDuration: 90,
+      status: 'DONE'
+    },
+    {
+      _id: '019a7935-e95d-7427-b625-358c14eaa9ff',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Essay Revision – Philosophy Paper',
+      description: 'Revise your paper on “The Paradox of Infinity” based on instructor feedback, improving clarity, transitions, and the conclusion.',
+      dueDate: '2025-11-13T23:00:00.000Z',
+      estimatedDuration: 150,
+      status: 'DONE'
+    },
+    {
+      _id: '019a793b-bdec-7df1-a768-f7864108b307',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Clean up 6.104 project 1 code repo',
+      description: '',
+      dueDate: '2025-11-14T02:00:00.000Z',
+      estimatedDuration: 30,
+      status: 'DONE'
+    },
+    {
+      _id: '019a7937-9f97-76aa-ba34-7193024e7419',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Research Meeting Preparation',
+      description: 'Prepare slides summarizing the results of your recent diffusion model training and performance metrics. Include key visualizations for the Media Lab meeting.',
+      dueDate: '2025-11-17T15:00:00.000Z',
+      estimatedDuration: 120,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Email 6.191 TA',
+      description: 'Ask about grading criteria for the upcoming 6.191 project report.',
+      dueDate: '2025-11-13T17:00:00.000Z',
+      estimatedDuration: 15,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7938-ad24-7abd-8b07-e0e42c668bef',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Lab 8 – Statistical Data Analysis',
+      description: 'Implement hypothesis testing and confidence interval estimation in Python. Submit both the code notebook and a short report interpreting the results.',
+      dueDate: '2025-11-17T04:59:00.000Z',
+      estimatedDuration: 210,
+      status: 'TODO'
+    }
+  ]
+} => { request: '019a794a-780e-7754-a040-432c38a7a286' }
+[Requesting] Received request for path: /Focus/_getCurrentTask
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Focus/_getCurrentTask'
+} => { request: '019a794a-7a77-7891-98ce-782e5fe8bf36' }
+Requesting.respond { request: '019a794a-7a77-7891-98ce-782e5fe8bf36', task: null } => { request: '019a794a-7a77-7891-98ce-782e5fe8bf36' }
+[Requesting] Received request for path: /Planner/clearDay
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Planner/clearDay'
+} => { request: '019a794a-a07b-7d98-849a-8d3426123ca1' }
+Planner.clearDay { user: '019a792d-4193-7c59-a819-df3bdffd5e0d' } => {}
+Requesting.respond { request: '019a794a-a07b-7d98-849a-8d3426123ca1', status: 'ok' } => { request: '019a794a-a07b-7d98-849a-8d3426123ca1' }
+[Requesting] Received request for path: /Schedule/_getSlots
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Schedule/_getSlots'
+} => { request: '019a794a-a2a3-7ea7-a015-762eaa6dd81a' }
+Requesting.respond {
+  request: '019a794a-a2a3-7ea7-a015-762eaa6dd81a',
+  slots: [
+    {
+      _id: '019a793e-53a5-7573-9485-9fab4280671b',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T14:00:00.000Z',
+      endTime: '2025-11-12T15:00:00.000Z',
+      description: 'Breakfast',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793e-b334-7622-bf77-607413256d72',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T17:00:00.000Z',
+      endTime: '2025-11-12T18:00:00.000Z',
+      description: 'Lunch',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a793f-2148-7114-b018-ffae6f8918a1',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-13T00:00:00.000Z',
+      endTime: '2025-11-13T01:00:00.000Z',
+      description: 'Dinner',
+      origin: 'MANUAL'
+    },
+    {
+      _id: '019a7949-cf3b-70da-82eb-a02bac76d888',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      startTime: '2025-11-12T20:30:00.000Z',
+      endTime: '2025-11-12T21:15:00.000Z',
+      description: 'Meeting',
+      origin: 'MANUAL'
+    }
+  ]
+} => { request: '019a794a-a2a3-7ea7-a015-762eaa6dd81a' }
+[Requesting] Received request for path: /UserAccount/_getUserProfile
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/UserAccount/_getUserProfile'
+} => { request: '019a794a-b136-7908-a76e-bbf96871e472' }
+Requesting.respond {
+  request: '019a794a-b136-7908-a76e-bbf96871e472',
+  profile: { displayName: 'Alex', email: 'alex@mit.edu' }
+} => { request: '019a794a-b136-7908-a76e-bbf96871e472' }
+[Requesting] Received request for path: /Tasks/deleteTask
+[Requesting] Received request for path: /Tasks/deleteTask
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  task: '019a7948-f926-7c44-9e4f-443d0b517b4a',
+  path: '/Tasks/deleteTask'
+} => { request: '019a794a-f474-78fd-8d5b-facd285b7749' }
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  task: '019a793b-bdec-7df1-a768-f7864108b307',
+  path: '/Tasks/deleteTask'
+} => { request: '019a794a-f498-7b11-9482-35ef9a7610d5' }
+[Requesting] Received request for path: /Tasks/deleteTask
+Tasks.deleteTask { task: '019a7948-f926-7c44-9e4f-443d0b517b4a' } => {}
+Tasks.deleteTask { task: '019a793b-bdec-7df1-a768-f7864108b307' } => {}
+Requesting.respond { request: '019a794a-f498-7b11-9482-35ef9a7610d5', status: 'ok' } => { request: '019a794a-f498-7b11-9482-35ef9a7610d5' }
+Requesting.respond { request: '019a794a-f474-78fd-8d5b-facd285b7749', status: 'ok' } => { request: '019a794a-f474-78fd-8d5b-facd285b7749' }
+[Requesting] Received request for path: /Tasks/_getTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Tasks/_getTasks'
+} => { request: '019a794a-f715-75d3-98fc-2d5863525866' }
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  task: '019a7935-e95d-7427-b625-358c14eaa9ff',
+  path: '/Tasks/deleteTask'
+} => { request: '019a794a-f529-7a1f-ae3d-d2034d5965d7' }
+Requesting.respond {
+  request: '019a794a-f715-75d3-98fc-2d5863525866',
+  tasks: [
+    {
+      _id: '019a7935-e95d-7427-b625-358c14eaa9ff',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Essay Revision – Philosophy Paper',
+      description: 'Revise your paper on “The Paradox of Infinity” based on instructor feedback, improving clarity, transitions, and the conclusion.',
+      dueDate: '2025-11-13T23:00:00.000Z',
+      estimatedDuration: 150,
+      status: 'DONE'
+    },
+    {
+      _id: '019a7937-9f97-76aa-ba34-7193024e7419',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Research Meeting Preparation',
+      description: 'Prepare slides summarizing the results of your recent diffusion model training and performance metrics. Include key visualizations for the Media Lab meeting.',
+      dueDate: '2025-11-17T15:00:00.000Z',
+      estimatedDuration: 120,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Email 6.191 TA',
+      description: 'Ask about grading criteria for the upcoming 6.191 project report.',
+      dueDate: '2025-11-13T17:00:00.000Z',
+      estimatedDuration: 15,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7938-ad24-7abd-8b07-e0e42c668bef',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Lab 8 – Statistical Data Analysis',
+      description: 'Implement hypothesis testing and confidence interval estimation in Python. Submit both the code notebook and a short report interpreting the results.',
+      dueDate: '2025-11-17T04:59:00.000Z',
+      estimatedDuration: 210,
+      status: 'TODO'
+    }
+  ]
+} => { request: '019a794a-f715-75d3-98fc-2d5863525866' }
+Tasks.deleteTask { task: '019a7935-e95d-7427-b625-358c14eaa9ff' } => {}
+Requesting.respond { request: '019a794a-f529-7a1f-ae3d-d2034d5965d7', status: 'ok' } => { request: '019a794a-f529-7a1f-ae3d-d2034d5965d7' }
+[Requesting] Received request for path: /Tasks/_getTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Tasks/_getTasks'
+} => { request: '019a794a-fd6e-759b-a5b7-053556990b3b' }
+Requesting.respond {
+  request: '019a794a-fd6e-759b-a5b7-053556990b3b',
+  tasks: [
+    {
+      _id: '019a7937-9f97-76aa-ba34-7193024e7419',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Research Meeting Preparation',
+      description: 'Prepare slides summarizing the results of your recent diffusion model training and performance metrics. Include key visualizations for the Media Lab meeting.',
+      dueDate: '2025-11-17T15:00:00.000Z',
+      estimatedDuration: 120,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Email 6.191 TA',
+      description: 'Ask about grading criteria for the upcoming 6.191 project report.',
+      dueDate: '2025-11-13T17:00:00.000Z',
+      estimatedDuration: 15,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7938-ad24-7abd-8b07-e0e42c668bef',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Lab 8 – Statistical Data Analysis',
+      description: 'Implement hypothesis testing and confidence interval estimation in Python. Submit both the code notebook and a short report interpreting the results.',
+      dueDate: '2025-11-17T04:59:00.000Z',
+      estimatedDuration: 210,
+      status: 'TODO'
+    }
+  ]
+} => { request: '019a794a-fd6e-759b-a5b7-053556990b3b' }
+[Requesting] Received request for path: /Tasks/_getTasks
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/Tasks/_getTasks'
+} => { request: '019a794a-ff43-7c97-8dd5-200bd816ee52' }
+Requesting.respond {
+  request: '019a794a-ff43-7c97-8dd5-200bd816ee52',
+  tasks: [
+    {
+      _id: '019a7937-9f97-76aa-ba34-7193024e7419',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Research Meeting Preparation',
+      description: 'Prepare slides summarizing the results of your recent diffusion model training and performance metrics. Include key visualizations for the Media Lab meeting.',
+      dueDate: '2025-11-17T15:00:00.000Z',
+      estimatedDuration: 120,
+      status: 'TODO'
+    },
+    {
+      _id: '019a793b-0ae3-728f-8cd2-0f3de1bae713',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Email 6.191 TA',
+      description: 'Ask about grading criteria for the upcoming 6.191 project report.',
+      dueDate: '2025-11-13T17:00:00.000Z',
+      estimatedDuration: 15,
+      status: 'TODO'
+    },
+    {
+      _id: '019a7938-ad24-7abd-8b07-e0e42c668bef',
+      owner: '019a792d-4193-7c59-a819-df3bdffd5e0d',
+      title: 'Lab 8 – Statistical Data Analysis',
+      description: 'Implement hypothesis testing and confidence interval estimation in Python. Submit both the code notebook and a short report interpreting the results.',
+      dueDate: '2025-11-17T04:59:00.000Z',
+      estimatedDuration: 210,
+      status: 'TODO'
+    }
+  ]
+} => { request: '019a794a-ff43-7c97-8dd5-200bd816ee52' }
+[Requesting] Received request for path: /UserAccount/logout
+Requesting.request {
+  session: '019a7948-6154-7996-a1d8-a6e2bec97e6b',
+  path: '/UserAccount/logout'
+} => { request: '019a794b-1498-7ebc-b133-df82ed5c151f' }
+Sessioning.delete { session: '019a7948-6154-7996-a1d8-a6e2bec97e6b' } => {}
+Requesting.respond {
+  request: '019a794b-1498-7ebc-b133-df82ed5c151f',
+  status: 'logged_out'
+} => { request: '019a794b-1498-7ebc-b133-df82ed5c151f' }

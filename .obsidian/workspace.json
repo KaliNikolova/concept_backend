@@ -186,6 +186,9 @@
   },
   "active": "50c8f38515c0b668",
   "lastOpenFiles": [
+    "media/assignment2-sketch.png",
+    "media/image.png",
+    "design/design.md",
     "design/tools/api-extraction-from-code.md",
     "design/tools/api-extraction-from-spec.md",
     "design/concepts/API/api_spec.md",
@@ -213,8 +216,6 @@
     "context/design/brainstorming/questioning.md/steps/response.d7fa8623.md",
     "context/design/brainstorming/questioning.md/20251107_181037.657bd8f7.md",
     "context/design/brainstorming/questioning.md/20251107_181015.a5296565.md",
-    "context/design/brainstorming/questioning.md/steps/implement.548c2578.md",
-    "context/design/brainstorming/questioning.md/20251107_180849.d7f4a397.md",
     "context/src/concepts/Planner/PlannerConcept.test.ts",
     "src/syncs/planner.sync.ts",
     "src/syncs/schedule.sync.ts",
